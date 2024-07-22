@@ -600,9 +600,9 @@ class EltakoWindowHandle(EltakoSensor):
             return
         
         if decoded.handle_position == WindowHandlePosition.CLOSED:
-            self._attr_native_value = STATE_CLOSED
+            self._attr_native_value = STATE_OPEN                # STATE_CLOSED
         elif decoded.handle_position == WindowHandlePosition.OPEN:
-            self._attr_native_value = STATE_OPEN
+            self._attr_native_value = STATE_CLOSED              # STATE_OPEN
         elif decoded.handle_position == WindowHandlePosition.TILT:
             self._attr_native_value = "tilt"
         else:
