@@ -1,6 +1,6 @@
 aiocoap
 pyserial-asyncio
-eltako14bus @ git+https://github.com/bertel2020/eltako14bus@releases/tag/v1.0
+eltako14bus @ git+https://github.com/bertel2020/eltako14bus/releases/tag/v1.0
 enocean>=0.60.1
 homeassistant
 termcolor
