@@ -273,7 +273,7 @@ SENSOR_DESC_CO2 = EltakoSensorEntityDescription(
     icon="mdi:molecule-co2",
     device_class=SensorDeviceClass.CO2,
     state_class=SensorStateClass.MEASUREMENT,
-    suggested_display_precision=1,
+    suggested_display_precision=None,
 )
 
 SENSOR_DESC_VOLTAGE = EltakoSensorEntityDescription(
