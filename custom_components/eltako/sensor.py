@@ -111,6 +111,7 @@ SENSOR_DESC_ELECTRICITY_CURRENT = EltakoSensorEntityDescription(
     icon="mdi:lightning-bolt",
     device_class=SensorDeviceClass.POWER,
     state_class=SensorStateClass.MEASUREMENT,
+    suggested_display_precision=0,
 )
 
 SENSOR_DESC_GAS_CUMULATIVE = EltakoSensorEntityDescription(
