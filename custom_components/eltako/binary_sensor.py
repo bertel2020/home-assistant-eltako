@@ -136,6 +136,7 @@ class EltakoBinarySensor(AbstractBinarySensor):
                 self._attr_device_class = BinarySensorDeviceClass.MOTION
                 self._attr_icon = 'mdi:motion-sensor'
             if dev_eep in [A5_13_01]:
+                self._attr_name = "Rain 2"
                 self._attr_icon = 'mdi:weather-pouring'
             if dev_eep in [D5_00_01]:
                 self._attr_device_class = BinarySensorDeviceClass.WINDOW
