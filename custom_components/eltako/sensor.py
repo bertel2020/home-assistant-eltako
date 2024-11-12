@@ -186,7 +186,7 @@ SENSOR_DESC_WEATHER_STATION_WIND_SPEED = EltakoSensorEntityDescription(
     icon="mdi:windsock",
     device_class=SensorDeviceClass.WIND_SPEED,
     state_class=SensorStateClass.MEASUREMENT,
-    suggested_display_precision=2,
+    suggested_display_precision=1,
 )
 
 SENSOR_DESC_WEATHER_STATION_RAIN = EltakoSensorEntityDescription(
