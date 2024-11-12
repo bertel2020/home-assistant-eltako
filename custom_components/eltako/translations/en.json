@@ -1,0 +1,14 @@
+{
+    "entity": {
+        "sensor": {
+            "windowhandle": {
+                "name": "Fenstergriff",
+                "state": {
+                    "open": "Open",
+                    "closed": "Closed",
+                    "tilt": "Tilt"
+                          }
+            }
+        }
+    }
+}
