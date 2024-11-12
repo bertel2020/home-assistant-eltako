@@ -135,6 +135,8 @@ class EltakoBinarySensor(AbstractBinarySensor):
             if dev_eep in [A5_07_01, A5_08_01]:
                 self._attr_device_class = BinarySensorDeviceClass.MOTION
                 self._attr_icon = 'mdi:motion-sensor'
+            if dev_eep in [A5_13_01]:
+                self._attr_icon = 'mdi:weather-pouring'
             if dev_eep in [D5_00_01]:
                 self._attr_device_class = BinarySensorDeviceClass.WINDOW
             if dev_eep in [F6_10_00]:
@@ -300,6 +302,11 @@ class EltakoBinarySensor(AbstractBinarySensor):
             if self.invert_signal:
                 self._attr_is_on = not self._attr_is_on
 
+        elif self.dev_eep in [A5_13_01]:
+            # LOGGER.debug("[Binary Sensor][%s] Received msg for processing eep %s telegram.", b2s(self.dev_id[0]), self.dev_eep.eep_string)
+
+            self._attr_is_on = decoded.rain_indication
+        
         elif self.dev_eep in [A5_30_01]:
 
             if self.description_key == "low_battery":
