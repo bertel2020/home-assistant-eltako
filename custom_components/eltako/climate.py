@@ -90,7 +90,7 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
     """Representation of an Eltako heating and cooling actor."""
 
     _update_frequency = 55 # sec
-    _actuator_mode: A5_10_06.Heater_Mode = None
+    _actuator_mode: A5_10_06.HeaterMode = None
     _hvac_mode_from_heating = HVACMode.HEAT
 
     COOLING_SWITCH_SIGNAL_FREQUENCY_IN_MIN: int = 15 # FTS14EM signals are repeated every 15min
@@ -234,19 +234,19 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
         if self._actuator_mode != None and self.current_temperature > 0:
             new_target_temp = kwargs['temperature']
 
-            if self._actuator_mode == A5_10_06.Heater_Mode.OFF:
-                self._actuator_mode = A5_10_06.Heater_Mode.NORMAL
+            if self._actuator_mode == A5_10_06.HeaterMode.OFF:
+                self._actuator_mode = A5_10_06.HeaterMode.NORMAL
 
             self._send_command(self._actuator_mode, new_target_temp)
         else:
             LOGGER.debug(f"[climate {self.dev_id}] default state of actor was not yet transferred.")
 
 
-    async def _async_send_command(self, mode: A5_10_06.Heater_Mode, target_temp: float) -> None:
+    async def _async_send_command(self, mode: A5_10_06.HeaterMode, target_temp: float) -> None:
         """Send command to set target temperature."""
         self._send_command(mode, target_temp)
 
-    def _send_command(self, mode: A5_10_06.Heater_Mode, target_temp: float) -> None:
+    def _send_command(self, mode: A5_10_06.HeaterMode, target_temp: float) -> None:
         """Send command to set target temperature."""
         address, _ = self._sender_id
         if self.current_temperature and self.target_temperature:
@@ -350,14 +350,14 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
             self._actuator_mode = decoded.mode
             self._attr_current_temperature = decoded.current_temperature
 
-            if decoded.mode == A5_10_06.Heater_Mode.OFF:
+            if decoded.mode == A5_10_06.HeaterMode.OFF:
                 self._attr_hvac_mode = HVACMode.OFF
-            elif decoded.mode == A5_10_06.Heater_Mode.NORMAL:
+            elif decoded.mode == A5_10_06.HeaterMode.NORMAL:
                 self._attr_hvac_mode = self._hvac_mode_from_heating
-            elif decoded.mode == A5_10_06.Heater_Mode.STAND_BY_2_DEGREES:
+            elif decoded.mode == A5_10_06.HeaterMode.STAND_BY_2_DEGREES:
                 self._attr_hvac_mode = self._hvac_mode_from_heating
 
-            if decoded.mode != A5_10_06.Heater_Mode.OFF:
+            if decoded.mode != A5_10_06.HeaterMode.OFF:
                 # show target temp in 0.5 steps
                 self._attr_target_temperature =  round( 2*decoded.target_temperature, 0)/2 
 
