@@ -487,6 +487,9 @@ class EltakoSensor(EltakoEntity, RestoreEntity, SensorEntity):
                 elif latest_state.attributes.get('state_class', None) == 'total_increasing':
                     self._attr_native_value = int(latest_state.state)
 
+                elif latest_state.attributes.get('device_class', None) == 'window':
+                    self._attr_native_value = latest_state.state
+
                 elif latest_state.attributes.get('device_class', None) == 'device_class':
                     # e.g.: 2024-02-12T23:32:44+00:00
                     self._attr_native_value = datetime.strptime(latest_state.state, '%Y-%m-%dT%H:%M:%S%z:%f')
