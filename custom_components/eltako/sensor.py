@@ -265,7 +265,7 @@ SENSOR_DESC_HUMIDITY = EltakoSensorEntityDescription(
     icon="mdi:water-percent",
     device_class=SensorDeviceClass.HUMIDITY,
     state_class=SensorStateClass.MEASUREMENT,
-    suggested_display_precision=1,
+    suggested_display_precision=0,
 )
 
 SENSOR_DESC_CO2 = EltakoSensorEntityDescription(
@@ -275,7 +275,7 @@ SENSOR_DESC_CO2 = EltakoSensorEntityDescription(
     icon="mdi:molecule-co2",
     device_class=SensorDeviceClass.CO2,
     state_class=SensorStateClass.MEASUREMENT,
-    suggested_display_precision=None,
+    suggested_display_precision=0,
 )
 
 SENSOR_DESC_VOLTAGE = EltakoSensorEntityDescription(
