@@ -150,6 +150,7 @@ SENSOR_DESC_WATER_CURRENT = EltakoSensorEntityDescription(
 SENSOR_DESC_WINDOWHANDLE = EltakoSensorEntityDescription(
     key=SENSOR_TYPE_WINDOWHANDLE,
     name="Window handle",
+    translation_key="windowhandle",
     icon="mdi:window-open-variant",
     device_class='window',
     native_unit_of_measurement=None,
