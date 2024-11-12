@@ -41,7 +41,8 @@ CONF_EEP_SUPPORTED_BINARY_SENSOR = [F6_01_01.eep_string,
                                     D5_00_01.eep_string, 
                                     A5_07_01.eep_string, 
                                     A5_08_01.eep_string, 
-                                    A5_30_01.eep_string, 
+                                    A5_30_01.eep_string,
+                                    A5_13_01.eep_string,
                                     A5_30_03.eep_string]
 CONF_EEP_SUPPORTED_SENSOR_ROCKER_SWITCH = [F6_02_01.eep_string, F6_02_02.eep_string]
 
