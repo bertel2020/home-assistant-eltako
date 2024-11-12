@@ -831,7 +831,7 @@ class EltakoCO2Sensor(EltakoSensor):
     - A5-09-04 (CO2, Temperature and Humidity)
     """
 
-    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name:str, dev_eep: EEP, description: EltakoSensorEntityDescription=SENSOR_DESC_HUMIDITY) -> None:
+    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name:str, dev_eep: EEP, description: EltakoSensorEntityDescription=SENSOR_DESC_CO2) -> None:
         """Initialize the Eltako CO2 sensor."""
         _dev_name = dev_name
         if _dev_name == "":
