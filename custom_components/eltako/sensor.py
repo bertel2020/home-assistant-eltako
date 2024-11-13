@@ -211,7 +211,7 @@ SENSOR_DESC_WEATHER_STATION_ILLUMINANCE_WEST = EltakoSensorEntityDescription(
 
 SENSOR_DESC_WEATHER_STATION_ILLUMINANCE_CENTRAL = EltakoSensorEntityDescription(
     key=SENSOR_TYPE_WEATHER_STATION_ILLUMINANCE_CENTRAL,
-    name="Illuminance (central)",
+    name="Illuminance (south)",
     native_unit_of_measurement=LIGHT_LUX,
     icon="mdi:weather-sunny",
     device_class=SensorDeviceClass.ILLUMINANCE,
