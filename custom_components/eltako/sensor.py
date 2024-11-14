@@ -463,6 +463,7 @@ class EltakoSensor(EltakoEntity, RestoreEntity, SensorEntity):
         
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep)
         self._attr_native_value = None
+        self.invert_signal = invert_signal
         
     @property
     def name(self):
@@ -615,7 +616,6 @@ class EltakoWindowHandle(EltakoSensor):
     def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, invert_signal: bool, description: EltakoSensorEntityDescription) -> None:
         """Initialize the Eltako window handle sensor device."""
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep, description)
-        self.invert_signal = invert_signal
         
     def value_changed(self, msg: ESP2Message):
         """Update the internal state of the sensor."""
