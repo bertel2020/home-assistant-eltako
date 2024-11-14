@@ -180,7 +180,8 @@ class SensorSchema(EltakoPlatformSchema):
 
     DEFAULT_NAME = ""
     DEFAULT_METER_TARIFFS = [1]
-
+    CONF_INVERT_SIGNAL = CONF_INVERT_SIGNAL
+    
     ENTITY_SCHEMA = vol.All(
         vol.Schema(
             {
