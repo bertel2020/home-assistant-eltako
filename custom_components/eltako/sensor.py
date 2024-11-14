@@ -463,7 +463,6 @@ class EltakoSensor(EltakoEntity, RestoreEntity, SensorEntity):
         
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep)
         self._attr_native_value = None
-        self.invert_signal = invert_signal
         
     @property
     def name(self):
