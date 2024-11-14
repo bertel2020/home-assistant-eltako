@@ -314,7 +314,7 @@ async def async_setup_entry(
     if platform in config:
         for entity_config in config[platform]:
             try:
-                dev_conf = DeviceConf(entity_config, [CONF_METER_TARIFFS])
+                dev_conf = DeviceConf(entity_config, [CONF_METER_TARIFFS, CONF_INVERT_SIGNAL])
                 dev_name = dev_conf.name
             
                 if dev_conf.eep in [A5_13_01]:
@@ -333,7 +333,7 @@ async def async_setup_entry(
                     if dev_name == "":
                         dev_name = DEFAULT_DEVICE_NAME_WINDOW_HANDLE
                     
-                    entities.append(EltakoWindowHandle(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, SENSOR_DESC_WINDOWHANDLE))
+                    entities.append(EltakoWindowHandle(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, SENSOR_DESC_WINDOWHANDLE, dev_conf.get(CONF_INVERT_SIGNAL)))
                     
                 elif dev_conf.eep in [A5_12_01]:
                     if dev_name == "":
@@ -612,10 +612,11 @@ class EltakoWindowHandle(EltakoSensor):
     - F6-10-00 (Mechanical handle / Hoppe AG)
     """
 
-    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, description: EltakoSensorEntityDescription) -> None:
+    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, invert_signal: bool, description: EltakoSensorEntityDescription) -> None:
         """Initialize the Eltako window handle sensor device."""
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep, description)
-
+        self.invert_signal = invert_signal
+        
     def value_changed(self, msg: ESP2Message):
         """Update the internal state of the sensor."""
         try:
@@ -625,11 +626,17 @@ class EltakoWindowHandle(EltakoSensor):
             return
         
         if decoded.handle_position == WindowHandlePosition.CLOSED:
-            self._attr_native_value = STATE_CLOSED
+            if not self.invert_signal:
+                self._attr_native_value = STATE_CLOSED
+            else:
+                self._attr_native_value = "tilt"
         elif decoded.handle_position == WindowHandlePosition.OPEN:
             self._attr_native_value = STATE_OPEN
         elif decoded.handle_position == WindowHandlePosition.TILT:
-            self._attr_native_value = "tilt"
+            if not self.invert_signal:
+                self._attr_native_value = "tilt"
+            else:
+                self._attr_native_value = STATE_CLOSED
         else:
             return
 
