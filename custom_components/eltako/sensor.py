@@ -612,7 +612,7 @@ class EltakoWindowHandle(EltakoSensor):
     - F6-10-00 (Mechanical handle / Hoppe AG)
     """
 
-    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, invert_signal: bool, description: EltakoSensorEntityDescription) -> None:
+    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, description: EltakoSensorEntityDescription, invert_signal: bool) -> None:
         """Initialize the Eltako window handle sensor device."""
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep, description)
         
