@@ -36,7 +36,7 @@ async def async_setup_entry(
         for entity_config in config[platform]:
             try:
                 dev_conf = DeviceConf(entity_config)
-                sender_config = config_helpers.get_device_conf(entity_config, CONF_SENDER)
+                sender_config = config_helpers.get_device_conf(entity_config, [CONF_SENDER, CONF_INVERT_SIGNAL])
 
                 entities.append(EltakoSwitch(platform, gateway, dev_conf.id, dev_conf.name, dev_conf.eep, sender_config.id, sender_config.eep))
             
@@ -53,11 +53,12 @@ async def async_setup_entry(
 class EltakoSwitch(EltakoEntity, SwitchEntity, RestoreEntity):
     """Representation of an Eltako switch device."""
 
-    def __init__(self, platform:str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, sender_id: AddressExpression, sender_eep: EEP):
+    def __init__(self, platform:str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, sender_id: AddressExpression, sender_eep: EEP, invert_signal: bool):
         """Initialize the Eltako switch device."""
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep)
         self._sender_id = sender_id
         self._sender_eep = sender_eep
+        self.invert_signal = invert_signal
         
     def load_value_initially(self, latest_state:State):
         try:
@@ -153,7 +154,10 @@ class EltakoSwitch(EltakoEntity, SwitchEntity, RestoreEntity):
             return
 
         if self.dev_eep in [M5_38_08]:
-            self._attr_is_on = decoded.state
+            if not self.invert_signal:
+                self._attr_is_on = decoded.state
+            else:
+                self._attr_is_on = not ( decoded.state )
             self.schedule_update_ha_state()
 
         elif self.dev_eep in [F6_02_01, F6_02_02]:
