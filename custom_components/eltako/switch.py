@@ -35,8 +35,8 @@ async def async_setup_entry(
     if platform in config:
         for entity_config in config[platform]:
             try:
-                dev_conf = DeviceConf(entity_config)
-                sender_config = config_helpers.get_device_conf(entity_config, [CONF_SENDER, CONF_INVERT_SIGNAL])
+                dev_conf = DeviceConf(entity_config, CONF_INVERT_SIGNAL)
+                sender_config = config_helpers.get_device_conf(entity_config, CONF_SENDER)
 
                 entities.append(EltakoSwitch(platform, gateway, dev_conf.id, dev_conf.name, dev_conf.eep, sender_config.id, sender_config.eep))
             
