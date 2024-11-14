@@ -38,7 +38,7 @@ async def async_setup_entry(
                 dev_conf = DeviceConf(entity_config, CONF_INVERT_SIGNAL)
                 sender_config = config_helpers.get_device_conf(entity_config, CONF_SENDER)
 
-                entities.append(EltakoSwitch(platform, gateway, dev_conf.id, dev_conf.name, dev_conf.eep, sender_config.id, sender_config.eep))
+                entities.append(EltakoSwitch(platform, gateway, dev_conf.id, dev_conf.name, dev_conf.eep, sender_config.id, sender_config.eep, dev_conf.get(CONF_INVERT_SIGNAL)))
             
             except Exception as e:
                 LOGGER.warning("[%s] Could not load configuration", platform)
