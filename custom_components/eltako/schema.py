@@ -140,7 +140,8 @@ class SwitchSchema(EltakoPlatformSchema):
 
     CONF_EEP_SUPPORTED = [M5_38_08.eep_string, F6_02_01.eep_string, F6_02_02.eep_string]
     CONF_SENDER_EEP_SUPPORTED = [F6_02_01.eep_string, F6_02_02.eep_string, A5_38_08.eep_string]
-
+    CONF_INVERT_SIGNAL = CONF_INVERT_SIGNAL
+    
     DEFAULT_NAME = "Switch"
 
     ENTITY_SCHEMA = vol.All(
@@ -150,6 +151,7 @@ class SwitchSchema(EltakoPlatformSchema):
                 vol.Required(CONF_EEP): vol.In(CONF_EEP_SUPPORTED),
                 vol.Required(CONF_SENDER): _get_sender_schema(CONF_SENDER_EEP_SUPPORTED),
                 vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+                vol.Optional(CONF_INVERT_SIGNAL, default=False): cv.boolean,
             }
         ),
     )
