@@ -227,6 +227,7 @@ class ClimateSchema(EltakoPlatformSchema):
 
     CONF_CLIMATE_EEP = [A5_10_06.eep_string]
     CONF_CLIMATE_SENDER_EEP = [A5_10_06.eep_string]
+    CONF_CLIMATE_HYGROSTAT_EEP = [A5_10_12.eep_string]
 
     DEFAULT_NAME = "Climate"
     DEFAULT_COOLING_SWITCH_NAME = "cooling mode switch"
@@ -259,7 +260,7 @@ class ClimateSchema(EltakoPlatformSchema):
                 vol.Optional(CONF_MAX_TARGET_TEMPERATURE, default=25): cv.Number,
                 vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,  
                 vol.Optional(CONF_ROOM_THERMOSTAT): _get_sender_schema(CONF_CLIMATE_SENDER_EEP),    # physical thermostat like FUTH
-                vol.Optional(CONF_ROOM_HYGROSTAT): _get_sender_schema(CONF_CLIMATE_SENDER_EEP),     # physical hygrostat like FUTH
+                vol.Optional(CONF_ROOM_HYGROSTAT): _get_sender_schema(CONF_CLIMATE_HYGROSTAT_EEP),  # physical hygrostat like FUTH
                 vol.Optional(CONF_COOLING_MODE): CONF_COOLING_MODE_SCHEMA                           # if not provided cooling is not supported
             }
         ),
