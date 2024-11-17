@@ -45,7 +45,6 @@ async def async_setup_entry(
                 dev_conf = DeviceConf(entity_config, [CONF_TEMPERATURE_UNIT, CONF_MAX_TARGET_TEMPERATURE, CONF_MIN_TARGET_TEMPERATURE])
                 sender = config_helpers.get_device_conf(entity_config, CONF_SENDER)
                 thermostat = config_helpers.get_device_conf(entity_config, CONF_ROOM_THERMOSTAT)
-                hygrostat = config_helpers.get_device_conf(entity_config, CONF_ROOM_HYGROSTAT)
 
                 cooling_switch = None
                 cooling_sender = None
@@ -55,13 +54,17 @@ async def async_setup_entry(
                     LOGGER.debug("[Climate] Read cooling sender config")
                     cooling_sender = config_helpers.get_device_conf(entity_config.get(CONF_COOLING_MODE), CONF_SENDER)
 
+                if CONF_ROOM_HYGROSTAT in config.keys():
+                    LOGGER.debug("[Climate] Read hygrostat config")    
+                    hygrostat = config_helpers.get_device_conf(entity_config, CONF_ROOM_HYGROSTAT)   
+                
                 if dev_conf.eep in [A5_10_06]:
                     ###### This way it is decouple from the order how devices will be loaded.
                     climate_entity = ClimateController(platform, gateway, dev_conf.id, dev_conf.name, dev_conf.eep, 
                                                        sender.id, sender.eep, 
                                                        dev_conf.get(CONF_TEMPERATURE_UNIT), 
                                                        dev_conf.get(CONF_MIN_TARGET_TEMPERATURE), dev_conf.get(CONF_MAX_TARGET_TEMPERATURE), 
-                                                       thermostat, cooling_switch, cooling_sender, hygrostat)
+                                                       thermostat, cooling_switch, cooling_sender, hygrostat.id, hygrostat.eep)
                     entities.append(climate_entity)
 
                     # subscribe for cooling switch events
@@ -70,7 +73,7 @@ async def async_setup_entry(
                                                                      config_helpers.convert_button_pos_from_hex_to_str(cooling_switch.get(CONF_SWITCH_BUTTON)))
                         LOGGER.debug(f"Subscribe for listening to cooling switch events: {event_id}")
                         hass.bus.async_listen(event_id, climate_entity.async_handle_event)
-
+            
             except Exception as e:
                 LOGGER.warning("[%s] Could not load configuration", platform)
                 LOGGER.critical(e, exc_info=True)
@@ -139,6 +142,9 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
         else:
             self._attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
 
+        if self.hygrostat:
+            self._attr_current_humidity = 0
+                     
         self._attr_temperature_unit = temp_unit
         # self._attr_target_temperature_high = max_temp
         # self._attr_target_temperature_low = min_temp
@@ -339,8 +345,7 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
                 self.change_temperature_values(msg)
 
         if self.hygrostat:
-            hygrostat_address, _ = self.hygrostat.id
-            if msg.address == hygrostat_address:
+            if msg.address == self.hygrostat.id:
                 LOGGER.debug(f"[climate {self.dev_id}] Change state triggered by hygrostat: {self.hygrostat.id}")
                 self.change_hygrostat_values(msg)
 
@@ -383,14 +388,13 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
     def change_hygrostat_values(self, msg: ESP2Message) -> None:
         try:
             if  msg.org == 0x07:
-                decoded = self.dev_eep.decode_message(msg)
+                decoded = self.hygrostat.eep.decode_message(msg)
         except Exception as e:
             LOGGER.warning(f"[climate {self.dev_id}] Could not decode message: %s", str(e))
             return
 
-        if  msg.org == 0x07 and self.dev_eep in [A5_10_12]:
+        if  msg.org == 0x07 and self.hygrostat.eep in [A5_10_12]:
 
-            self._actuator_mode = decoded.mode
             self._attr_current_humidity = decoded.humidity
 
         self.schedule_update_ha_state()
