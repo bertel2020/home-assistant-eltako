@@ -125,7 +125,7 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
         if self.thermostat:
             self.listen_to_addresses.append(self.thermostat.id)
 
-        self.thermostat = hygrostat
+        self.hygrostat = hygrostat
         if self.hygrostat:
             self.listen_to_addresses.append(self.hygrostat.id)
 
