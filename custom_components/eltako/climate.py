@@ -45,6 +45,7 @@ async def async_setup_entry(
                 dev_conf = DeviceConf(entity_config, [CONF_TEMPERATURE_UNIT, CONF_MAX_TARGET_TEMPERATURE, CONF_MIN_TARGET_TEMPERATURE])
                 sender = config_helpers.get_device_conf(entity_config, CONF_SENDER)
                 thermostat = config_helpers.get_device_conf(entity_config, CONF_ROOM_THERMOSTAT)
+                hygrostat = config_helpers.get_device_conf(entity_config, CONF_ROOM_HYGROSTAT)
 
                 cooling_switch = None
                 cooling_sender = None
@@ -60,7 +61,7 @@ async def async_setup_entry(
                                                        sender.id, sender.eep, 
                                                        dev_conf.get(CONF_TEMPERATURE_UNIT), 
                                                        dev_conf.get(CONF_MIN_TARGET_TEMPERATURE), dev_conf.get(CONF_MAX_TARGET_TEMPERATURE), 
-                                                       thermostat, cooling_switch, cooling_sender)
+                                                       thermostat, hygrostat, cooling_switch, cooling_sender)
                     entities.append(climate_entity)
 
                     # subscribe for cooling switch events
@@ -105,6 +106,7 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
     _attr_swing_mode = None
     _attr_swing_modes = None
     _attr_current_temperature = 0
+    _attr_current_humidity = 0
     _attr_target_temperature = 0
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
 
@@ -112,7 +114,7 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
     def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, 
                  sender_id: AddressExpression, sender_eep: EEP, 
                  temp_unit, min_temp: int, max_temp: int, 
-                 thermostat: DeviceConf, cooling_switch: DeviceConf, cooling_sender: DeviceConf):
+                 thermostat: DeviceConf, hygrostat: DeviceConf, cooling_switch: DeviceConf, cooling_sender: DeviceConf):
         """Initialize the Eltako heating and cooling source."""
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep)
         self._on_state = False
@@ -122,6 +124,10 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
         self.thermostat = thermostat
         if self.thermostat:
             self.listen_to_addresses.append(self.thermostat.id)
+
+        self.thermostat = hygrostat
+        if self.hygrostat:
+            self.listen_to_addresses.append(self.hygrostat.id)
 
         self.cooling_switch = cooling_switch
         self.cooling_switch_last_signal_timestamp = 0
@@ -156,6 +162,7 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
                         self.hvac_modes.append(m_enum)
 
             self._attr_current_temperature = latest_state.attributes.get('current_temperature', None)
+            self._attr_humidity = latest_state.attributes.get('humidity', None)
             self._attr_target_temperature = latest_state.attributes.get('temperature', None)
 
             self._attr_hvac_mode = None
@@ -167,6 +174,7 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
         except Exception as e:
             self._attr_hvac_mode = None
             self._attr_current_temperature = None
+            self._attr_humidity = None
             self._attr_target_temperature = None
             raise e
         
@@ -330,6 +338,13 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
                 LOGGER.debug(f"[climate {self.dev_id}] Change state triggered by thermostat: {self.thermostat.id}")
                 self.change_temperature_values(msg)
 
+        if self.hygrostat:
+            hygrostat_address, _ = self.hygrostat.id
+            if msg.address == hygrostat_address:
+                LOGGER.debug(f"[climate {self.dev_id}] Change state triggered by hygrostat: {self.thermostat.id}")
+                self.change_hygrostat_values(msg)
+
+    
         # Implemented via eventing: async_handle_event
         # if self.cooling_switch:
         #     if msg.address == self.cooling_switch.id[0]:
@@ -362,5 +377,20 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
             if decoded.mode != A5_10_06.HeaterMode.OFF:
                 # show target temp in 0.5 steps
                 self._attr_target_temperature =  round( 2*decoded.target_temperature, 0)/2 
+
+        self.schedule_update_ha_state()
+
+    def change_hygrostat_values(self, msg: ESP2Message) -> None:
+        try:
+            if  msg.org == 0x07:
+                decoded = self.dev_eep.decode_message(msg)
+        except Exception as e:
+            LOGGER.warning(f"[climate {self.dev_id}] Could not decode message: %s", str(e))
+            return
+
+        if  msg.org == 0x07 and self.dev_eep in [A5_10_12]:
+
+            self._actuator_mode = decoded.mode
+            self._attr_humidity = decoded.humidity
 
         self.schedule_update_ha_state()
