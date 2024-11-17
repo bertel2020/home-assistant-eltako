@@ -61,7 +61,7 @@ async def async_setup_entry(
                                                        sender.id, sender.eep, 
                                                        dev_conf.get(CONF_TEMPERATURE_UNIT), 
                                                        dev_conf.get(CONF_MIN_TARGET_TEMPERATURE), dev_conf.get(CONF_MAX_TARGET_TEMPERATURE), 
-                                                       thermostat, hygrostat, cooling_switch, cooling_sender)
+                                                       thermostat, cooling_switch, cooling_sender, hygrostat)
                     entities.append(climate_entity)
 
                     # subscribe for cooling switch events
@@ -162,7 +162,7 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
                         self.hvac_modes.append(m_enum)
 
             self._attr_current_temperature = latest_state.attributes.get('current_temperature', None)
-            self._attr_humidity = latest_state.attributes.get('humidity', None)
+            self._attr_current_humidity = latest_state.attributes.get('current_humidity', None)
             self._attr_target_temperature = latest_state.attributes.get('temperature', None)
 
             self._attr_hvac_mode = None
@@ -174,7 +174,7 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
         except Exception as e:
             self._attr_hvac_mode = None
             self._attr_current_temperature = None
-            self._attr_humidity = None
+            self._attr_current_humidity = None
             self._attr_target_temperature = None
             raise e
         
@@ -341,7 +341,7 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
         if self.hygrostat:
             hygrostat_address, _ = self.hygrostat.id
             if msg.address == hygrostat_address:
-                LOGGER.debug(f"[climate {self.dev_id}] Change state triggered by hygrostat: {self.thermostat.id}")
+                LOGGER.debug(f"[climate {self.dev_id}] Change state triggered by hygrostat: {self.hygrostat.id}")
                 self.change_hygrostat_values(msg)
 
     
@@ -391,6 +391,6 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
         if  msg.org == 0x07 and self.dev_eep in [A5_10_12]:
 
             self._actuator_mode = decoded.mode
-            self._attr_humidity = decoded.humidity
+            self._attr_current_humidity = decoded.humidity
 
         self.schedule_update_ha_state()
