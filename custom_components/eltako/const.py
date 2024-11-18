@@ -54,6 +54,7 @@ CONF_MAX_TARGET_TEMPERATURE: Final = "max_target_temperature"
 CONF_MIN_TARGET_TEMPERATURE: Final = "min_target_temperature"
 CONF_ROOM_THERMOSTAT: Final = "thermostat"
 CONF_ROOM_HYGROSTAT: Final = "hygrostat"
+CONF_ROOM_ACTUATOR: Final = "actuator"
 CONF_COOLING_MODE: Final = "cooling_mode"
 
 CONF_ID_REGEX: Final = "^([0-9a-fA-F]{2})-([0-9a-fA-F]{2})-([0-9a-fA-F]{2})-([0-9a-fA-F]{2})( (left|right))?$"
