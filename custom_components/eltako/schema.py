@@ -233,6 +233,9 @@ class ClimateSchema(EltakoPlatformSchema):
     DEFAULT_NAME = "Climate"
     DEFAULT_COOLING_SWITCH_NAME = "cooling mode switch"
     DEFAULT_COOLING_SENDER_NAME = "cooling mode sender"
+    DEFAULT_ROOM_ACTUATOR_SWITCH_NAME = "actuator mode switch"
+    DEFAULT_ROOM_ACTUATOR_SENDER_NAME = "actuator mode sender"
+
 
     CONF_COOLING_MODE_SCHEMA = vol.Schema(
     {
@@ -250,6 +253,25 @@ class ClimateSchema(EltakoPlatformSchema):
         }),
     })
 
+
+
+    CONF_ACTUATOR_MODE_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_ROOM_ACTUATOR): vol.Schema(  
+        {
+            vol.Required(CONF_ID): cv.matches_regex(CONF_ID_REGEX),
+            vol.Required(CONF_EEP): vol.In([M5_38_08.eep_string]),
+        }),
+        vol.Optional(CONF_SENDER): vol.Schema(  
+        {
+            vol.Required(CONF_ID): cv.matches_regex(CONF_ID_REGEX),
+            vol.Required(CONF_EEP): vol.In([F6_02_01.eep_string, F6_02_02.eep_string]),
+        }),
+    })
+
+
+
+
     ENTITY_SCHEMA = vol.All(
         vol.Schema(
             {
@@ -262,7 +284,8 @@ class ClimateSchema(EltakoPlatformSchema):
                 vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,  
                 vol.Optional(CONF_ROOM_THERMOSTAT): _get_sender_schema(CONF_CLIMATE_SENDER_EEP),    # physical thermostat like FUTH
                 vol.Optional(CONF_ROOM_HYGROSTAT): _get_sender_schema(CONF_CLIMATE_HYGROSTAT_EEP),  # physical hygrostat like FUTH
-                vol.Optional(CONF_ROOM_ACTUATOR): _get_sender_schema(CONF_CLIMATE_ACTUATOR_EEP),    # actuator like FSR14-2x
+                #vol.Optional(CONF_ROOM_ACTUATOR): _get_sender_schema(CONF_CLIMATE_ACTUATOR_EEP),   # actuator like FSR14-2x
+                vol.Optional(CONF_ROOM_ACTUATOR_MODE): CONF_ACTUATOR_MODE_SCHEMA,                   # actuator like FSR14-2x
                 vol.Optional(CONF_COOLING_MODE): CONF_COOLING_MODE_SCHEMA                           # if not provided cooling is not supported
             }
         ),
