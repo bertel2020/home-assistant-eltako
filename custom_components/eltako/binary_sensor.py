@@ -159,7 +159,7 @@ class EltakoBinarySensor(AbstractBinarySensor):
         
         try:
             decoded = self.dev_eep.decode_message(msg)
-            LOGGER.debug("decoded : %s", json.dumps(decoded.__dict__))
+            #LOGGER.debug("decoded : %s", json.dumps(decoded.__dict__))
             # LOGGER.debug("msg : %s, data: %s", type(msg), msg.data)
         except Exception as e:
             LOGGER.warning("[%s %s] Could not decode message for eep %s does not fit to message type %s (org %s)", 
@@ -343,7 +343,7 @@ class EltakoBinarySensor(AbstractBinarySensor):
         self.schedule_update_ha_state()
 
         if self.is_on:
-            LOGGER.debug("Fire event for binary sensor.")
+            #LOGGER.debug("Fire event for binary sensor.")
             switch_address = config_helpers.format_address((msg.address, None))
             event_id = config_helpers.get_bus_event_type(self.gateway.base_id, EVENT_CONTACT_CLOSED, AddressExpression((msg.address, None)))
             self.hass.bus.fire(
