@@ -97,7 +97,7 @@ SENSOR_DESC_BATTERY_VOLTAGE = EltakoSensorEntityDescription(
 
 SENSOR_DESC_ELECTRICITY_CUMULATIVE = EltakoSensorEntityDescription(
     key=SENSOR_TYPE_ELECTRICITY_CUMULATIVE,
-    name="Reading",
+    name="Energy",
     native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
     icon="mdi:lightning-bolt",
     device_class=SensorDeviceClass.ENERGY,
@@ -436,6 +436,26 @@ async def async_setup_entry(
                     LOGGER.critical(e, exc_info=True)
 
 
+
+
+    # add meter to climate devices
+    if Platform.CLIMATE in config:
+        for entity_config in config[Platform.CLIMATE]:
+            try:
+                dev_conf = DeviceConf(entity_config)
+                actuator_meter = config_helpers.get_device_conf(entity_config, CONF_ROOM_ACTUATOR_METER)
+                if actuator_meter:
+                    entities.append(EltakoMeterSensorForClimate(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, actuator_meter, SENSOR_DESC_ELECTRICITY_CUMULATIVE, tariff=0))
+                    entities.append(EltakoMeterSensorForClimate(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, actuator_meter, SENSOR_DESC_ELECTRICITY_CURRENT, tariff=1, tariff_in_name="Tariff 1"))
+            
+            except Exception as e:
+                LOGGER.warning("[%s] Could not load configuration", Platform.CLIMATE)
+                LOGGER.critical(e, exc_info=True)
+
+
+
+
+
     # add gateway information
     entities.append(GatewayInfoField(platform, gateway, "Id", str(gateway.dev_id), "mdi:identifier"))
     entities.append(GatewayInfoField(platform, gateway, "Base Id", b2s(gateway.base_id[0]), "mdi:identifier"))
@@ -454,9 +474,7 @@ async def async_setup_entry(
 class EltakoSensor(EltakoEntity, RestoreEntity, SensorEntity):
     """Representation of an  Eltako sensor device such as a power meter."""
 
-    def __init__(self, platform: str, gateway: EnOceanGateway, 
-                 dev_id: AddressExpression, dev_name: str, dev_eep: EEP, description: EltakoSensorEntityDescription
-    ) -> None:
+    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, description: EltakoSensorEntityDescription) -> None:
         """Initialize the Eltako sensor device."""
         self.entity_description = description
         self._attr_state_class = description.state_class
@@ -486,7 +504,12 @@ class EltakoSensor(EltakoEntity, RestoreEntity, SensorEntity):
                         self._attr_native_value = None
 
                 elif latest_state.attributes.get('state_class', None) == 'total_increasing':
-                    self._attr_native_value = int(latest_state.state)
+                    if latest_state.state.count('.') + latest_state.state.count(',') == 1:
+                        self._attr_native_value = float(latest_state.state)
+                    elif latest_state.state.count('.') == 0 and latest_state.state.count(',') == 0:
+                        self._attr_native_value = int(latest_state.state)
+                    else:
+                        self._attr_native_value = None
 
                 elif latest_state.attributes.get('device_class', None) == 'window':
                     self._attr_native_value = latest_state.state
@@ -615,7 +638,8 @@ class EltakoWindowHandle(EltakoSensor):
     def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, description: EltakoSensorEntityDescription, invert_signal: bool) -> None:
         """Initialize the Eltako window handle sensor device."""
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep, description)
-        
+        self.invert_signal = invert_signal
+
     def value_changed(self, msg: ESP2Message):
         """Update the internal state of the sensor."""
         try:
@@ -973,8 +997,8 @@ class GatewayReceivedMessagesInActiveSession(EltakoSensor):
                             state_class=SensorStateClass.TOTAL_INCREASING,
                             # device_class=SensorDeviceClass.VOLUME,
                             # native_unit_of_measurement="Messages", # => raises error message
-                            unit_of_measurement="Messages",
-                            suggested_unit_of_measurement="Messages",
+                            unit_of_measurement=None,
+                            suggested_unit_of_measurement=None,
                             icon="mdi:chart-line",
                         )
         )
@@ -1082,4 +1106,67 @@ class EventListenerInfoField(EltakoSensor):
         self.native_value = self.convert_event_function(event)
 
         self.schedule_update_ha_state()
-            
+
+
+
+
+
+
+
+
+class EltakoMeterSensorForClimate(EltakoSensor):
+    """Representation of an Eltako electricity sensor."""
+
+    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name:str, dev_eep:EEP, actuator_meter, description: EltakoSensorEntityDescription, *, tariff, tariff_in_name:bool=True) -> None:
+        """Initialize the Eltako meter sensor device."""
+        super().__init__(platform, gateway, dev_id, dev_name, dev_eep, description)
+        self._tariff = tariff
+        self._tariff_in_name = tariff_in_name
+
+        self.actuator_meter = actuator_meter
+        if self.actuator_meter:
+            LOGGER.debug(f"[climate/sensor {self.dev_id}] Actuator meter found: {self.actuator_meter.id}, {self.actuator_meter.id[0]}")
+            #LOGGER.debug(f"[climate {self.dev_id}] Actuator details: {self.actuator}")
+            self.listen_to_addresses.append(self.actuator_meter.id[0])
+
+    @property
+    def name(self):
+        """Return the default name for the sensor."""
+        #if self._tariff_in_name:
+        #    return f"{self.entity_description.name} (Tariff {self._tariff + 1})"
+        #else:
+        return f"{self.entity_description.name}"
+
+    def value_changed(self, msg: ESP2Message):
+
+        if self.actuator_meter:
+            actuator_meter_address, _ = self.actuator_meter.id
+            if msg.address == actuator_meter_address:
+                LOGGER.debug(f"[climate/sensor {self.dev_id}] Change state triggered by actuator: {self.actuator_meter.id}")
+                self.change_actuator_meter_values(msg)
+
+
+    def change_actuator_meter_values(self, msg: ESP2Message) -> None:
+        try:
+            decoded = self.actuator_meter.eep.decode_message(msg)
+        except Exception as e:
+            LOGGER.warning(f"[climate/sensor {self.dev_id}] Could not decode message: %s", str(e))
+            return
+        
+        if decoded.learn_button != 1:
+            return
+
+
+        tariff = decoded.measurement_channel
+        cumulative = not decoded.data_type
+        value = decoded.meter_reading
+        divisor = 10 ** decoded.divisor
+        calculatedValue = value / divisor
+        
+        if cumulative and self._tariff == tariff and self.entity_description.key == SENSOR_TYPE_ELECTRICITY_CUMULATIVE:
+            self._attr_native_value = round(calculatedValue, 2)
+            self.schedule_update_ha_state()
+        elif (not cumulative) and msg.data[3] != 0x8F and self.entity_description.key == SENSOR_TYPE_ELECTRICITY_CURRENT: # 0x8F means that, it's sending the serial number of the meter
+            self._attr_native_value = round(calculatedValue, 2)
+            self.schedule_update_ha_state()
+
