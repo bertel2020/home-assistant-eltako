@@ -14,6 +14,7 @@ from homeassistant.components.climate import (
     HVACMode,
     ClimateEntityFeature
 )
+
 from homeassistant import config_entries
 from homeassistant.const import Platform, CONF_TEMPERATURE_UNIT, Platform
 from homeassistant.core import HomeAssistant
@@ -25,6 +26,7 @@ from .device import *
 from .const import *
 from .config_helpers import DeviceConf
 from . import config_helpers, get_gateway_from_hass, get_device_config_for_gateway
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -46,27 +48,26 @@ async def async_setup_entry(
                 sender = config_helpers.get_device_conf(entity_config, CONF_SENDER)
                 if sender:
                     LOGGER.debug(f"[climate] Sender {sender} ID: {sender.id} EEP: {sender.eep}") 
+
                 thermostat = config_helpers.get_device_conf(entity_config, CONF_ROOM_THERMOSTAT)
                 if thermostat:
                     LOGGER.debug(f"[climate] Thermostat {thermostat} ID: {thermostat.id} EEP: {thermostat.eep}") 
+
                 hygrostat = config_helpers.get_device_conf(entity_config, CONF_ROOM_HYGROSTAT)
                 if hygrostat:
                     LOGGER.debug(f"[climate] Hygrostat {hygrostat} ID: {hygrostat.id} EEP: {hygrostat.eep}") 
                 
-                #actuator = config_helpers.get_device_conf(entity_config, CONF_ROOM_ACTUATOR)
-                #if actuator:
-                #    LOGGER.debug(f"[climate] Actuator {actuator} ID: {actuator.id} EEP: {actuator.eep}") 
-
-
-                actuator = None
-                actuator_sender = None
-                if CONF_ROOM_ACTUATOR_MODE in config.keys():
-                    LOGGER.debug("[Climate] Read actuator switch config")
-                    actuator = config_helpers.get_device_conf(entity_config.get(CONF_ROOM_ACTUATOR_MODE), CONF_ROOM_ACTUATOR)
+                actuator = config_helpers.get_device_conf(entity_config.get(CONF_ROOM_ACTUATOR_MODE), CONF_ROOM_ACTUATOR)
+                if actuator:
                     LOGGER.debug(f"[climate] Actuator {actuator} ID: {actuator.id} EEP: {actuator.eep}") 
-                    LOGGER.debug("[Climate] Read actuator sender config")
-                    actuator_sender = config_helpers.get_device_conf(entity_config.get(CONF_ROOM_ACTUATOR_MODE), CONF_SENDER)
+                
+                actuator_sender = config_helpers.get_device_conf(entity_config.get(CONF_ROOM_ACTUATOR_MODE), CONF_SENDER)
+                if actuator_sender:
                     LOGGER.debug(f"[climate] Actuator sender {actuator_sender} ID: {actuator_sender.id} EEP: {actuator_sender.eep}") 
+
+                actuator_meter = config_helpers.get_device_conf(entity_config, CONF_ROOM_ACTUATOR_METER)
+                if actuator_meter:
+                    LOGGER.debug(f"[climate] Actuator meter {actuator_sender} ID: {actuator_meter.id} EEP: {actuator_meter.eep}") 
 
 
                 cooling_switch = None
@@ -84,7 +85,7 @@ async def async_setup_entry(
                                                        sender.id, sender.eep, 
                                                        dev_conf.get(CONF_TEMPERATURE_UNIT), 
                                                        dev_conf.get(CONF_MIN_TARGET_TEMPERATURE), dev_conf.get(CONF_MAX_TARGET_TEMPERATURE), 
-                                                       thermostat, hygrostat, actuator, actuator_sender, cooling_switch, cooling_sender)
+                                                       thermostat, hygrostat, actuator, actuator_sender, actuator_meter, cooling_switch, cooling_sender)
                     entities.append(climate_entity)
 
                     # subscribe for cooling switch events
@@ -116,6 +117,7 @@ def validate_ids_of_climate(entities:list[EltakoEntity]):
             e.validate_dev_id(e.actuator_id)
         if hasattr(e, "actuator_sender_id"):
             e.validate_dev_id(e.actuator_sender_id)
+
 class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
     """Representation of an Eltako heating and cooling actor."""
 
@@ -143,7 +145,7 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
     def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, 
                  sender_id: AddressExpression, sender_eep: EEP, 
                  temp_unit, min_temp: int, max_temp: int, 
-                 thermostat: DeviceConf, hygrostat: DeviceConf, actuator: DeviceConf, actuator_sender: DeviceConf, cooling_switch: DeviceConf, cooling_sender: DeviceConf):
+                 thermostat: DeviceConf, hygrostat: DeviceConf, actuator: DeviceConf, actuator_sender: DeviceConf, actuator_meter: DeviceConf, cooling_switch: DeviceConf, cooling_sender: DeviceConf):
         """Initialize the Eltako heating and cooling source."""
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep)
         self._on_state = False
@@ -168,6 +170,12 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
             #LOGGER.debug(f"[climate {self.dev_id}] Actuator details: {self.actuator}")
             self.listen_to_addresses.append(self.actuator.id[0])
             self.actuator_sender = actuator_sender
+
+        self.actuator_meter = actuator_meter
+        if self.actuator_meter:
+            LOGGER.debug(f"[climate {self.dev_id}] Actuator meter found: {self.actuator_meter.id}, {self.actuator_meter.id[0]}")
+            #LOGGER.debug(f"[climate {self.dev_id}] Actuator details: {self.actuator}")
+            #self.listen_to_addresses.append(self.actuator_meter.id[0])
 
         LOGGER.debug(f"[Climate] Devices listening: {self.listen_to_addresses}")            
 
@@ -310,16 +318,16 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
     def _send_set_normal_mode(self) -> None:
         LOGGER.debug(f"[climate {self.dev_id}] Send signal to set mode: Normal")
         #address, _ = self._sender_id
-        address, _ = self._actuator_sender_id
-        self.send_message(RPSMessage(address, 0x30, b'\x70', True))
+        address, _ = self.actuator_sender.id
+        self.send_message(RPSMessage(address, 0x30, b'\x30', True))
 
 
     def _send_mode_off(self) -> None:
         LOGGER.debug(f"[climate {self.dev_id}] Send signal to set mode: OFF")
         #address, _ = self._sender_id
-        address, _ = self._actuator_sender_id
+        address, _ = self.actuator_sender.id
         #self.send_message(RPSMessage(address, 0x30, b'\x10', True))
-        self.send_message(RPSMessage(address, 0x30, b'\x50', True))
+        self.send_message(RPSMessage(address, 0x30, b'\x10', True))
 
 
     def _send_mode_night(self) -> None:
@@ -393,7 +401,8 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
             if msg.address == actuator_address:
                 LOGGER.debug(f"[climate {self.dev_id}] Change state triggered by actuator: {self.actuator.id}")
                 self.change_actuator_values(msg)
-    
+
+
         # Implemented via eventing: async_handle_event
         # if self.cooling_switch:
         #     if msg.address == self.cooling_switch.id[0]:
@@ -459,5 +468,6 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
                 self._attr_hvac_mode = HVACMode.OFF
             elif decoded.state == 1:
                 self._attr_hvac_mode = self._hvac_mode_from_heating
-            #LOGGER.debug(f"Actuator decoded state: {decoded.state}")
+            LOGGER.debug(f"Actuator decoded state: {decoded.state}")
         self.schedule_update_ha_state()
+
