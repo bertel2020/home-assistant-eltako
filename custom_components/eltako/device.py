@@ -26,7 +26,7 @@ class EltakoEntity(Entity):
         """Initialize the device."""
         self._attr_has_entity_name = True
         self._attr_should_poll = True
-
+        self._attr_name = None
         self._attr_ha_platform = platform
         self._attr_gateway = gateway
         self.hass = self.gateway.hass
