@@ -2,13 +2,36 @@
     "entity": {
         "sensor": {
             "windowhandle": {
-                "name": "Fenstergriff",
+                "name": "Windows handle",
                 "state": {
                     "open": "Open",
                     "closed": "Closed",
                     "tilt": "Tilt"
-                          }
+                }
+            },
+            "weatherstation_dawn": {
+                "name": "Illuminance (dawn)"
+            },
+            "weatherstation_temp": {
+                "name": "Temperature"
+            },
+            "weatherstation_wind": {
+                "name": "Wind speed"
+            },
+            "weatherstation_illu_west": {
+                "name": "Illuminance (west)"
+            },
+            "weatherstation_illu_south": {
+                "name": "Illuminance (south)"
+            },
+            "weatherstation_illu_east": {
+                "name": "Illuminance (east)"
+            }
+        },
+        "binary_sensor": {
+            "weatherstation_rain": {
+                "name": "Rain"
             }
         }
-    }
+    }    
 }
