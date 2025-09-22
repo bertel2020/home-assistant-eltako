@@ -156,6 +156,28 @@ class SwitchSchema(EltakoPlatformSchema):
         ),
     )
 
+
+class ButtonSchema(EltakoPlatformSchema):
+    """Voluptuous schema for Eltako buttons."""
+    PLATFORM = Platform.BUTTON
+
+    CONF_EEP_SUPPORTED = [M5_38_08.eep_string, F6_02_01.eep_string, F6_02_02.eep_string]
+    CONF_SENDER_EEP_SUPPORTED = [F6_02_01.eep_string, F6_02_02.eep_string]
+    
+    DEFAULT_NAME = "Button"
+
+    ENTITY_SCHEMA = vol.All(
+        vol.Schema(
+            {
+                vol.Required(CONF_ID): cv.matches_regex(CONF_ID_REGEX),
+                vol.Required(CONF_EEP): vol.In(CONF_EEP_SUPPORTED),
+                vol.Required(CONF_SENDER): _get_sender_schema(CONF_SENDER_EEP_SUPPORTED),
+                vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+            }
+        ),
+    )
+
+
 class SensorSchema(EltakoPlatformSchema):
     """Voluptuous schema for Eltako sensors."""
     PLATFORM = Platform.SENSOR
@@ -202,7 +224,7 @@ class CoverSchema(EltakoPlatformSchema):
     PLATFORM = Platform.COVER
 
     CONF_EEP_SUPPORTED = [G5_3F_7F.eep_string]
-    CONF_SENDER_EEP_SUPPORTED = [H5_3F_7F.eep_string]
+    CONF_SENDER_EEP_SUPPORTED = [H5_3F_7F.eep_string, F6_02_01.eep_string, F6_02_02.eep_string]
 
     DEFAULT_NAME = "Cover"
 
@@ -309,6 +331,7 @@ class GatewaySchema(EltakoPlatformSchema):
                 **BinarySensorSchema.platform_node(),
                 **LightSchema.platform_node(),
                 **SwitchSchema.platform_node(),
+                **ButtonSchema.platform_node(),
                 **SensorSchema.platform_node(),
                 **CoverSchema.platform_node(),
                 **ClimateSchema.platform_node(),
