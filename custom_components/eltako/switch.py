@@ -7,7 +7,7 @@ from eltakobus.util import AddressExpression
 from eltakobus.eep import *
 
 from homeassistant import config_entries
-from homeassistant.components.switch import SwitchEntity
+from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -19,6 +19,7 @@ from .device import *
 from .gateway import EnOceanGateway
 from .const import *
 
+import time
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -56,6 +57,10 @@ class EltakoSwitch(EltakoEntity, SwitchEntity, RestoreEntity):
     def __init__(self, platform:str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, sender_id: AddressExpression, sender_eep: EEP, invert_signal: bool):
         """Initialize the Eltako switch device."""
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep)
+        self.entity_description = SwitchEntityDescription(
+            key=None,
+            name=None,
+        )
         self._sender_id = sender_id
         self._sender_eep = sender_eep
         self.invert_signal = invert_signal
@@ -85,21 +90,34 @@ class EltakoSwitch(EltakoEntity, SwitchEntity, RestoreEntity):
         
         if self._sender_eep in [F6_02_01, F6_02_02]:
             # in PCT14 function 02 'direct  pushbutton top on' needs to be configured
+            LOGGER.debug(f"[{Platform.SWITCH} {str(self.dev_id)}] - TURN ON - is_on: {self.is_on}, state: {self.state}, discriminator: {discriminator}, inverted: {self.invert_signal}")
             if discriminator == "left":
-                action = 1  # 0x30
+                if not self.invert_signal:
+                    action = 1  # 0x30
+                else:
+                    action = 0  # 0x10
             elif discriminator == "right":
-                action = 3  # 0x70
+                if not self.invert_signal:
+                    action = 3  # 0x70
+                else:
+                    action = 2  # 0x50
             else:
-                action = 1
+                if not self.invert_signal:
+                    action = 1  # 0x30
+                else:
+                    action = 0  # 0x10
                 
             pressed_msg = F6_02_01(action, 1, 0, 0).encode_message(address)
             self.send_message(pressed_msg)
-            
-            released_msg = F6_02_01(action, 0, 0, 0).encode_message(address)
+            time.sleep(100/1000)          
+            released_msg = F6_02_01(action, 0, 0, 0).encode_message_released(address)
             self.send_message(released_msg)
         
         elif self._sender_eep == A5_38_08:
-            switching = CentralCommandSwitching(0, 1, 0, 0, 1)
+            if not self.invert_signal:
+                switching = CentralCommandSwitching(0, 1, 0, 0, 1)
+            else:
+                switching = CentralCommandSwitching(0, 1, 0, 0, 0)
             msg = A5_38_08(command=0x01, switching=switching).encode_message(address)
             self.send_message(msg)
 
@@ -118,21 +136,34 @@ class EltakoSwitch(EltakoEntity, SwitchEntity, RestoreEntity):
         
         if self._sender_eep in [F6_02_01, F6_02_02]:
             # in PCT14 function 02 'direct  pushbutton top on' needs to be configured
+            LOGGER.debug(f"[{Platform.SWITCH} {str(self.dev_id)}] - TURN OFF - is_on: {self.is_on}, state: {self.state}, discriminator: {discriminator}, inverted: {self.invert_signal}")
             if discriminator == "left":
-                action = 0  # 0x10
+                if not self.invert_signal:
+                    action = 0  # 0x10
+                else:
+                    action = 1  # 0x30
             elif discriminator == "right":
-                action = 2  # 0x50
+                if not self.invert_signal:
+                    action = 2  # 0x50
+                else: 
+                    action = 3  # 0x70
             else:
-                action = 0
+                if not self.invert_signal:
+                    action = 0  # 0x10
+                else:
+                    action = 1  # 0x30
                 
             pressed_msg = F6_02_01(action, 1, 0, 0).encode_message(address)
             self.send_message(pressed_msg)
-            
-            released_msg = F6_02_01(action, 0, 0, 0).encode_message(address)
+            time.sleep(100/1000)          
+            released_msg = F6_02_01(action, 0, 0, 0).encode_message_released(address)
             self.send_message(released_msg)
 
         elif self._sender_eep == A5_38_08:
-            switching = CentralCommandSwitching(0, 1, 0, 0, 0)
+            if not self.invert_signal:
+                switching = CentralCommandSwitching(0, 1, 0, 0, 0)
+            else:
+                switching = CentralCommandSwitching(0, 1, 0, 0, 1)
             msg = A5_38_08(command=0x01, switching=switching).encode_message(address)
             self.send_message(msg)
 
