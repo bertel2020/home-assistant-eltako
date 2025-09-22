@@ -66,6 +66,7 @@ SENSOR_TYPE_GAS_CURRENT = "gas_current"
 SENSOR_TYPE_WATER_CUMULATIVE = "water_cumulative"
 SENSOR_TYPE_WATER_CURRENT = "water_current"
 SENSOR_TYPE_TEMPERATURE = "temperature"
+SENSOR_TYPE_TEMPERATURE_CURRENT = "current_temperature"
 SENSOR_TYPE_TARGET_TEMPERATURE = "target_temperature"
 SENSOR_TYPE_HUMIDITY = "humidity"
 SENSOR_TYPE_CO2 = "co2"
@@ -163,6 +164,7 @@ SENSOR_DESC_WINDOWHANDLE = EltakoSensorEntityDescription(
 SENSOR_DESC_WEATHER_STATION_ILLUMINANCE_DAWN = EltakoSensorEntityDescription(
     key=SENSOR_TYPE_WEATHER_STATION_ILLUMINANCE_DAWN,
     name="Illuminance (dawn)",
+    translation_key="weatherstation_dawn",
     native_unit_of_measurement=LIGHT_LUX,
     icon="mdi:weather-sunset",
     device_class=SensorDeviceClass.ILLUMINANCE,
@@ -173,6 +175,7 @@ SENSOR_DESC_WEATHER_STATION_ILLUMINANCE_DAWN = EltakoSensorEntityDescription(
 SENSOR_DESC_WEATHER_STATION_TEMPERATURE = EltakoSensorEntityDescription(
     key=SENSOR_TYPE_WEATHER_STATION_TEMPERATURE,
     name="Temperature",
+    translation_key="weatherstation_temp",
     native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     icon="mdi:thermometer",
     device_class=SensorDeviceClass.TEMPERATURE,
@@ -183,6 +186,7 @@ SENSOR_DESC_WEATHER_STATION_TEMPERATURE = EltakoSensorEntityDescription(
 SENSOR_DESC_WEATHER_STATION_WIND_SPEED = EltakoSensorEntityDescription(
     key=SENSOR_TYPE_WEATHER_STATION_WIND_SPEED,
     name="Wind speed",
+    translation_key="weatherstatio_wind",
     native_unit_of_measurement=UnitOfSpeed.METERS_PER_SECOND,
     icon="mdi:windsock",
     device_class=SensorDeviceClass.WIND_SPEED,
@@ -193,6 +197,7 @@ SENSOR_DESC_WEATHER_STATION_WIND_SPEED = EltakoSensorEntityDescription(
 SENSOR_DESC_WEATHER_STATION_RAIN = EltakoSensorEntityDescription(
     key=SENSOR_TYPE_WEATHER_STATION_RAIN,
     name="Rain",
+    translation_key="weatherstation_rain",
     native_unit_of_measurement="",
     icon="mdi:weather-pouring",
     device_class="rain",
@@ -202,6 +207,7 @@ SENSOR_DESC_WEATHER_STATION_RAIN = EltakoSensorEntityDescription(
 SENSOR_DESC_WEATHER_STATION_ILLUMINANCE_WEST = EltakoSensorEntityDescription(
     key=SENSOR_TYPE_WEATHER_STATION_ILLUMINANCE_WEST,
     name="Illuminance (west)",
+    translation_key="weatherstation_illu_west",
     native_unit_of_measurement=LIGHT_LUX,
     icon="mdi:weather-sunny",
     device_class=SensorDeviceClass.ILLUMINANCE,
@@ -212,6 +218,7 @@ SENSOR_DESC_WEATHER_STATION_ILLUMINANCE_WEST = EltakoSensorEntityDescription(
 SENSOR_DESC_WEATHER_STATION_ILLUMINANCE_CENTRAL = EltakoSensorEntityDescription(
     key=SENSOR_TYPE_WEATHER_STATION_ILLUMINANCE_CENTRAL,
     name="Illuminance (south)",
+    translation_key="weatherstation_illu_south",
     native_unit_of_measurement=LIGHT_LUX,
     icon="mdi:weather-sunny",
     device_class=SensorDeviceClass.ILLUMINANCE,
@@ -222,6 +229,7 @@ SENSOR_DESC_WEATHER_STATION_ILLUMINANCE_CENTRAL = EltakoSensorEntityDescription(
 SENSOR_DESC_WEATHER_STATION_ILLUMINANCE_EAST = EltakoSensorEntityDescription(
     key=SENSOR_TYPE_WEATHER_STATION_ILLUMINANCE_EAST,
     name="Illuminance (east)",
+    translation_key="weatherstation_illu_east",
     native_unit_of_measurement=LIGHT_LUX,
     icon="mdi:weather-sunny",
     device_class=SensorDeviceClass.ILLUMINANCE,
@@ -242,6 +250,16 @@ SENSOR_DESC_ILLUMINATION = EltakoSensorEntityDescription(
 SENSOR_DESC_TEMPERATURE = EltakoSensorEntityDescription(
     key=SENSOR_TYPE_TEMPERATURE,
     name="Temperature",
+    native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    icon="mdi:thermometer",
+    device_class=SensorDeviceClass.TEMPERATURE,
+    state_class=SensorStateClass.MEASUREMENT,
+    suggested_display_precision=1,
+)
+
+SENSOR_DESC_TEMPERATURE_CURRENT = EltakoSensorEntityDescription(
+    key=SENSOR_TYPE_TEMPERATURE_CURRENT,
+    name="Current Temperature",
     native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     icon="mdi:thermometer",
     device_class=SensorDeviceClass.TEMPERATURE,
@@ -324,7 +342,7 @@ async def async_setup_entry(
                     entities.append(EltakoWeatherStation(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, SENSOR_DESC_WEATHER_STATION_ILLUMINANCE_DAWN))
                     entities.append(EltakoWeatherStation(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, SENSOR_DESC_WEATHER_STATION_TEMPERATURE))
                     entities.append(EltakoWeatherStation(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, SENSOR_DESC_WEATHER_STATION_WIND_SPEED))
-                    entities.append(EltakoWeatherStation(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, SENSOR_DESC_WEATHER_STATION_RAIN))
+                    #entities.append(EltakoWeatherStation(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, SENSOR_DESC_WEATHER_STATION_RAIN))
                     entities.append(EltakoWeatherStation(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, SENSOR_DESC_WEATHER_STATION_ILLUMINANCE_WEST))
                     entities.append(EltakoWeatherStation(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, SENSOR_DESC_WEATHER_STATION_ILLUMINANCE_CENTRAL))
                     entities.append(EltakoWeatherStation(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, SENSOR_DESC_WEATHER_STATION_ILLUMINANCE_EAST))
@@ -437,17 +455,22 @@ async def async_setup_entry(
 
 
 
-
-    # add meter to climate devices
+    # add meter and hygrostat to climate devices
     if Platform.CLIMATE in config:
         for entity_config in config[Platform.CLIMATE]:
             try:
                 dev_conf = DeviceConf(entity_config)
                 actuator_meter = config_helpers.get_device_conf(entity_config, CONF_ROOM_ACTUATOR_METER)
+                hygrostat = config_helpers.get_device_conf(entity_config, CONF_ROOM_HYGROSTAT)
+
                 if actuator_meter:
-                    entities.append(EltakoMeterSensorForClimate(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, actuator_meter, SENSOR_DESC_ELECTRICITY_CUMULATIVE, tariff=0))
-                    entities.append(EltakoMeterSensorForClimate(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, actuator_meter, SENSOR_DESC_ELECTRICITY_CURRENT, tariff=1, tariff_in_name="Tariff 1"))
-            
+                    entities.append(EltakoMeterSensorForClimate(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, actuator_meter, SENSOR_DESC_ELECTRICITY_CUMULATIVE))
+                    entities.append(EltakoMeterSensorForClimate(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, actuator_meter, SENSOR_DESC_ELECTRICITY_CURRENT))
+
+                if hygrostat:
+                    entities.append(EltakoHumiditySensorForClimate(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, hygrostat))
+                    entities.append(EltakoTemperatureSensor(platform, gateway, dev_conf.id, dev_name, dev_conf.eep))
+
             except Exception as e:
                 LOGGER.warning("[%s] Could not load configuration", Platform.CLIMATE)
                 LOGGER.critical(e, exc_info=True)
@@ -571,7 +594,6 @@ class EltakoVoltageSensor(EltakoSensor):
 
 class EltakoMeterSensor(EltakoSensor):
     """Representation of an Eltako electricity sensor.
-
     EEPs (EnOcean Equipment Profiles):
     - A5-12-01 (Automated Meter Reading, Electricity)
     - A5-12-02 (Automated Meter Reading, Gas)
@@ -630,7 +652,6 @@ class EltakoMeterSensor(EltakoSensor):
 
 class EltakoWindowHandle(EltakoSensor):
     """Representation of an Eltako window handle device.
-
     EEPs (EnOcean Equipment Profiles):
     - F6-10-00 (Mechanical handle / Hoppe AG)
     """
@@ -668,7 +689,6 @@ class EltakoWindowHandle(EltakoSensor):
 
 class EltakoWeatherStation(EltakoSensor):
     """Representation of an Eltako weather station.
-    
     EEPs (EnOcean Equipment Profiles):
     - A5-13-01 (Weather station)
     """
@@ -696,31 +716,39 @@ class EltakoWeatherStation(EltakoSensor):
                 return
             
             self._attr_native_value = decoded.dawn_sensor
+        
         elif self.entity_description.key == SENSOR_TYPE_WEATHER_STATION_TEMPERATURE:
             if decoded.identifier != 0x01:
+                LOGGER.debug(f"[EltakoWeatherStation] received message - temperature: {decoded.temperature}")
                 return
             
             self._attr_native_value = decoded.temperature
+        
         elif self.entity_description.key == SENSOR_TYPE_WEATHER_STATION_WIND_SPEED:
             if decoded.identifier != 0x01:
                 return
             
             self._attr_native_value = decoded.wind_speed
-        elif self.entity_description.key == SENSOR_TYPE_WEATHER_STATION_RAIN:
-            if decoded.identifier != 0x01:
-                return
-            
-            self._attr_native_value = decoded.rain_indication
+
+        ### RAIN Sensor as Binary Sensor in binary_sensor.py
+        #elif self.entity_description.key == SENSOR_TYPE_WEATHER_STATION_RAIN:
+        #    if decoded.identifier != 0x01:
+        #        return
+        #    
+        #    self._attr_native_value = decoded.rain_indication
+
         elif self.entity_description.key == SENSOR_TYPE_WEATHER_STATION_ILLUMINANCE_WEST:
             if decoded.identifier != 0x02:
                 return
             
             self._attr_native_value = decoded.sun_west * 1000.0
+        
         elif self.entity_description.key == SENSOR_TYPE_WEATHER_STATION_ILLUMINANCE_CENTRAL:
             if decoded.identifier != 0x02:
                 return
             
             self._attr_native_value = decoded.sun_south * 1000.0
+        
         elif self.entity_description.key == SENSOR_TYPE_WEATHER_STATION_ILLUMINANCE_EAST:
             if decoded.identifier != 0x02:
                 return
@@ -732,7 +760,6 @@ class EltakoWeatherStation(EltakoSensor):
 
 class EltakoTemperatureSensor(EltakoSensor):
     """Representation of an Eltako temperature sensor.
-    
     EEPs (EnOcean Equipment Profiles):
     - A5-04-02 (Temperature and Humidity)
     """
@@ -804,7 +831,6 @@ class EltakoBatteryVoltageSensor(EltakoSensor):
 
 class EltakoTargetTemperatureSensor(EltakoSensor):
     """Representation of an Eltako target temperature sensor.
-    
     EEPs (EnOcean Equipment Profiles):
     - A5-10-06, A5-10-12
     """
@@ -831,7 +857,6 @@ class EltakoTargetTemperatureSensor(EltakoSensor):
 
 class EltakoHumiditySensor(EltakoSensor):
     """Representation of an Eltako humidity sensor.
-    
     EEPs (EnOcean Equipment Profiles):
     - A5-04-02 (Temperature and Humidity)
     """
@@ -862,7 +887,6 @@ class EltakoHumiditySensor(EltakoSensor):
 
 class EltakoCO2Sensor(EltakoSensor):
     """Representation of an Eltako CO2 sensor.
-    
     EEPs (EnOcean Equipment Profiles):
     - A5-09-04 (CO2, Temperature and Humidity)
     """
@@ -1117,32 +1141,27 @@ class EventListenerInfoField(EltakoSensor):
 class EltakoMeterSensorForClimate(EltakoSensor):
     """Representation of an Eltako electricity sensor."""
 
-    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name:str, dev_eep:EEP, actuator_meter, description: EltakoSensorEntityDescription, *, tariff, tariff_in_name:bool=True) -> None:
+    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name:str, dev_eep:EEP, actuator_meter, description: EltakoSensorEntityDescription) -> None:
         """Initialize the Eltako meter sensor device."""
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep, description)
-        self._tariff = tariff
-        self._tariff_in_name = tariff_in_name
 
         self.actuator_meter = actuator_meter
         if self.actuator_meter:
-            LOGGER.debug(f"[climate/sensor {self.dev_id}] Actuator meter found: {self.actuator_meter.id}, {self.actuator_meter.id[0]}")
+            LOGGER.debug(f"[climate/sensor {self.dev_id}] Actuator meter found: {self.actuator_meter.id[0]}")
             #LOGGER.debug(f"[climate {self.dev_id}] Actuator details: {self.actuator}")
             self.listen_to_addresses.append(self.actuator_meter.id[0])
 
     @property
     def name(self):
         """Return the default name for the sensor."""
-        #if self._tariff_in_name:
-        #    return f"{self.entity_description.name} (Tariff {self._tariff + 1})"
-        #else:
         return f"{self.entity_description.name}"
 
     def value_changed(self, msg: ESP2Message):
 
         if self.actuator_meter:
-            actuator_meter_address, _ = self.actuator_meter.id
+            actuator_meter_address = self.actuator_meter.id[0]
             if msg.address == actuator_meter_address:
-                LOGGER.debug(f"[climate/sensor {self.dev_id}] Change state triggered by actuator: {self.actuator_meter.id}")
+                LOGGER.debug(f"[climate/sensor {self.dev_id}] Change state triggered by actuator meter: {self.actuator_meter.id}")
                 self.change_actuator_meter_values(msg)
 
 
@@ -1156,17 +1175,53 @@ class EltakoMeterSensorForClimate(EltakoSensor):
         if decoded.learn_button != 1:
             return
 
-
-        tariff = decoded.measurement_channel
         cumulative = not decoded.data_type
         value = decoded.meter_reading
         divisor = 10 ** decoded.divisor
         calculatedValue = value / divisor
         
-        if cumulative and self._tariff == tariff and self.entity_description.key == SENSOR_TYPE_ELECTRICITY_CUMULATIVE:
+        if cumulative and self.entity_description.key == SENSOR_TYPE_ELECTRICITY_CUMULATIVE:
             self._attr_native_value = round(calculatedValue, 2)
             self.schedule_update_ha_state()
         elif (not cumulative) and msg.data[3] != 0x8F and self.entity_description.key == SENSOR_TYPE_ELECTRICITY_CURRENT: # 0x8F means that, it's sending the serial number of the meter
             self._attr_native_value = round(calculatedValue, 2)
             self.schedule_update_ha_state()
+
+
+
+class EltakoHumiditySensorForClimate(EltakoSensor):
+    """Representation of an Eltako humidity sensor."""
+
+    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name:str, dev_eep: EEP, hygrostat, description: EltakoSensorEntityDescription=SENSOR_DESC_HUMIDITY) -> None:
+        """Initialize the Eltako humidity sensor."""
+        _dev_name = dev_name
+        if _dev_name == "":
+            _dev_name = DEFAULT_DEVICE_NAME_HYGROSTAT
+        super().__init__(platform, gateway, dev_id, _dev_name, dev_eep, description)
+
+        self.hygrostat = hygrostat
+        if self.hygrostat:
+            LOGGER.debug(f"[climate/sensor {self.dev_id}] Hygrostat found: {self.hygrostat.id[0]}")
+            #LOGGER.debug(f"[climate {self.dev_id}] Actuator details: {self.actuator}")
+            self.listen_to_addresses.append(self.hygrostat.id[0])
+
+
+    def value_changed(self, msg: ESP2Message):
+
+        if self.hygrostat:
+            hygrostat_address = self.hygrostat.id[0]
+            if msg.address == hygrostat_address:
+                LOGGER.debug(f"[climate/sensor {self.dev_id}] Change state triggered by hygrostat: {self.hygrostat.id[0]}")
+                self.change_hygrostat_values(msg)
+
+    def change_hygrostat_values(self, msg: ESP2Message) -> None:
+        try:
+            if msg.data[3] == 0x08:
+                decoded = self.hygrostat.eep.decode_message(msg)
+        except Exception as e:
+            LOGGER.warning(f"[climate/sensor {self.dev_id}] Could not decode message: %s", str(e))
+            return
+        
+        self._attr_native_value = decoded.humidity
+        self.schedule_update_ha_state()
 
