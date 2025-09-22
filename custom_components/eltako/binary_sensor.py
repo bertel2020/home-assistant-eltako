@@ -9,8 +9,11 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_DEVICE_CLASS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.entity import DeviceInfo, EntityDescription
+from homeassistant.helpers.entity import Entity, DeviceInfo, EntityDescription
+from homeassistant.helpers.entity_registry import EntityRegistryItems 
 from homeassistant.helpers.typing import ConfigType
+
+
 
 from .device import *
 from .const import *
@@ -69,6 +72,11 @@ async def async_setup_entry(
                             entities.append(EltakoBinarySensor(platform_id, gateway, dev_conf.id, name, dev_conf.eep, 
                                                                 dev_conf.get(CONF_DEVICE_CLASS), dev_conf.get(CONF_INVERT_SIGNAL),
                                                                 EntityDescription(key="low_battery", name=name) ))
+                        elif dev_conf.eep == A5_13_01:
+                            name = "Rain"
+                            entities.append(EltakoBinarySensor(platform_id, gateway, dev_conf.id, name, dev_conf.eep, 
+                                                                dev_conf.get(CONF_DEVICE_CLASS), dev_conf.get(CONF_INVERT_SIGNAL),
+                                                                EntityDescription(key="weather_station_rain", name=name)))
                         else:
                             entities.append(EltakoBinarySensor(platform_id, gateway, dev_conf.id, dev_conf.name, dev_conf.eep, 
                                                                 dev_conf.get(CONF_DEVICE_CLASS), dev_conf.get(CONF_INVERT_SIGNAL)))
@@ -77,12 +85,29 @@ async def async_setup_entry(
                     LOGGER.warning("[%s] Could not load configuration for platform_id %s", platform, platform_id)
                     LOGGER.critical(e, exc_info=True)
 
+
+        # add binary sensor to climate devices with meter
+        if Platform.CLIMATE in config:
+            for entity_config in config[Platform.CLIMATE]:
+                try:
+                    dev_conf = config_helpers.DeviceConf(entity_config)
+                    actuator_meter = config_helpers.get_device_conf(entity_config, CONF_ROOM_ACTUATOR_METER)
+                    if actuator_meter:
+                        LOGGER.debug(f"[climate/binary] Actuator meter ID: {actuator_meter.id[0]} EEP: {actuator_meter.eep}, Parent Climate: {dev_conf}") 
+                        entities.append(EltakoBinarySensorForClimate(platform_id, gateway, dev_conf.id, dev_conf.name, dev_conf.eep, actuator_meter, name="Heating", key="heating_state", value=None))
+
+                except Exception as e:
+                    LOGGER.warning("[%s] Could not load configuration", Platform.CLIMATE)
+                    LOGGER.critical(e, exc_info=True)
+
+
     # is connection active sensor for gateway (serial connection)
     entities.append(GatewayConnectionState(platform, gateway))
 
     # dev_id validation not possible because there can be bus sensors as well as decentralized sensors.
     log_entities_to_be_added(entities, platform)
     async_add_entities(entities)
+
 
     
 class AbstractBinarySensor(EltakoEntity, RestoreEntity, BinarySensorEntity):
@@ -136,13 +161,14 @@ class EltakoBinarySensor(AbstractBinarySensor):
                 self._attr_device_class = BinarySensorDeviceClass.MOTION
                 self._attr_icon = 'mdi:motion-sensor'
             if dev_eep in [A5_13_01]:
-                self._attr_name = "Rain 2"
+                self._attr_translation_key = "weatherstation_rain"
+                self._attr_name = description.name
                 self._attr_icon = 'mdi:weather-pouring'
             if dev_eep in [D5_00_01]:
                 self._attr_device_class = BinarySensorDeviceClass.WINDOW
             if dev_eep in [F6_10_00]:
                 self._attr_device_class = BinarySensorDeviceClass.WINDOW
-            
+
 
     def value_changed(self, msg: ESP2Message):
         """Fire an event with the data that have changed.
@@ -265,12 +291,19 @@ class EltakoBinarySensor(AbstractBinarySensor):
 
         elif self.dev_eep in [F6_10_00]:
             # LOGGER.debug("[Binary Sensor][%s] Received msg for processing eep %s telegram.", b2s(self.dev_id[0]), self.dev_eep.eep_string)
-            
-            # is_on == True => open
-            self._attr_is_on = decoded.handle_position > 0
 
-            if self.invert_signal:
-                self._attr_is_on = not self._attr_is_on
+            if decoded.handle_position == WindowHandlePosition.CLOSED:
+                if not self.invert_signal:
+                    self._attr_is_on = False
+                else:
+                    self._attr_is_on = True
+            elif decoded.handle_position == WindowHandlePosition.OPEN:
+                self._attr_is_on = True
+            elif decoded.handle_position == WindowHandlePosition.TILT:
+                if not self.invert_signal:
+                    self._attr_is_on = True
+                else:
+                    self._attr_is_on = False
 
         elif self.dev_eep in [D5_00_01]:
             # LOGGER.debug("[Binary Sensor][%s] Received msg for processing eep %s telegram.", b2s(self.dev_id[0]), self.dev_eep.eep_string)
@@ -305,11 +338,11 @@ class EltakoBinarySensor(AbstractBinarySensor):
 
         elif self.dev_eep in [A5_13_01]:
             # LOGGER.debug("[Binary Sensor][%s] Received msg for processing eep %s telegram.", b2s(self.dev_id[0]), self.dev_eep.eep_string)
-
-            self._attr_is_on = decoded.rain_indication
+            # LOGGER.debug(f"[binary] Rain indicator: {decoded.rain_indication}, Identifier: {decoded.identifier}") 
+            if decoded.identifier == 1:
+                self._attr_is_on = decoded.rain_indication == 1
         
         elif self.dev_eep in [A5_30_01]:
-
             if self.description_key == "low_battery":
                 self._attr_is_on = decoded.low_battery
             else:
@@ -319,7 +352,6 @@ class EltakoBinarySensor(AbstractBinarySensor):
                 self._attr_is_on = not self._attr_is_on
 
         elif self.dev_eep in [A5_30_03]:
-
             if self.description_key == "0":
                 self._attr_is_on = decoded.digital_input_0
             elif self.description_key == "1":
@@ -354,6 +386,7 @@ class EltakoBinarySensor(AbstractBinarySensor):
                     "is_on": self.is_on
                 },
             )
+
 
 class GatewayConnectionState(AbstractBinarySensor):
     """Protocols last time when message received"""
@@ -391,3 +424,50 @@ class GatewayConnectionState(AbstractBinarySensor):
 
         self._attr_is_on = connected
         self.schedule_update_ha_state()
+
+
+
+
+class EltakoBinarySensorForClimate(AbstractBinarySensor):
+
+    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name:str, dev_eep: EEP, actuator_meter, name: str=None, key: str=None, value: bool=False):
+        super().__init__(platform, gateway, dev_id, dev_name, dev_eep, key)
+        self._attr_name = name
+        self._attr_is_on = value
+        self.actuator_meter = actuator_meter
+
+        LOGGER.debug(f"[climate/binary {self.dev_id}] Actuator meter found: {self.actuator_meter.id[0]}, adding Entity")
+        self.listen_to_addresses.append(self.actuator_meter.id[0])
+
+    def value_changed(self, msg: ESP2Message):
+
+        if self.actuator_meter:
+            actuator_meter_address, _ = self.actuator_meter.id
+            if msg.address == actuator_meter_address:
+                LOGGER.debug(f"[climate/binary {self.dev_id}] Change state triggered by actuator meter: {self.actuator_meter.id}")
+                self.change_binary_sensor(msg)
+
+
+    def change_binary_sensor(self, msg: ESP2Message) -> None:
+        try:
+            decoded = self.actuator_meter.eep.decode_message(msg)
+        except Exception as e:
+            LOGGER.warning(f"[climate/binary {self.dev_id}] Could not decode message: %s", str(e))
+            return
+        
+        if decoded.learn_button != 1:
+            return
+
+        value = decoded.meter_reading
+        divisor = 10 ** decoded.divisor
+        calculatedValue = value / divisor
+
+        LOGGER.debug(f"[climate/binary {self.dev_id}] Heating entity Value: {calculatedValue}, raw value: {value}") 
+        if decoded.data_type == 1 and calculatedValue != 0:
+            LOGGER.debug(f"[climate/binary {self.dev_id}] Heating on") 
+            self._attr_is_on = True
+        elif decoded.data_type == 1:
+            LOGGER.debug(f"[climate/binary {self.dev_id}] Heating off") 
+            self._attr_is_on = False
+
+
