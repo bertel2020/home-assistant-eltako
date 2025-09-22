@@ -7,8 +7,31 @@
                     "open": "Offen",
                     "closed": "Geschlossen",
                     "tilt": "Gekippt"
-                          }
+                }
+            },
+            "weatherstation_dawn": {
+                "name": "Dämmerung"
+            },
+            "weatherstation_temp": {
+                "name": "Temperatur"
+            },
+            "weatherstation_wind": {
+                "name": "Windgeschwindigkeit"
+            },
+            "weatherstation_illu_west": {
+                "name": "Sonnenwert West"
+            },
+            "weatherstation_illu_south": {
+                "name": "Sonnenwert Süd"
+            },
+            "weatherstation_illu_east": {
+                "name": "Sonnenwert Ost"
+            }
+        },
+        "binary_sensor": {
+            "weatherstation_rain": {
+                "name": "Regen"
             }
         }
-    }
+    }    
 }
