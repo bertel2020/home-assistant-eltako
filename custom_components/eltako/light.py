@@ -10,6 +10,7 @@ from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ColorMode,
     LightEntity,
+    LightEntityDescription
 )
 from homeassistant import config_entries
 from homeassistant.const import Platform
@@ -24,6 +25,7 @@ from .device import *
 from .gateway import EnOceanGateway
 from .const import *
 
+import time
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -90,6 +92,10 @@ class EltakoDimmableLight(AbstractLightEntity):
     def __init__(self, platform:str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, sender_id: AddressExpression, sender_eep: EEP):
         """Initialize the Eltako light source."""
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep)
+        self.entity_description = LightEntityDescription(
+            key=None,
+            name=None,
+        )
         self._sender_id = sender_id
         self._sender_eep = sender_eep
 
@@ -117,8 +123,8 @@ class EltakoDimmableLight(AbstractLightEntity):
                 
             pressed_msg = F6_02_01(action, 1, 0, 0).encode_message(address)
             self.send_message(pressed_msg)
-            
-            released_msg = F6_02_01(action, 0, 0, 0).encode_message(address)
+            time.sleep(100/1000)          
+            released_msg = F6_02_01(action, 0, 0, 0).encode_message_released(address)
             self.send_message(released_msg)
 
         else:
@@ -152,8 +158,8 @@ class EltakoDimmableLight(AbstractLightEntity):
                 
             pressed_msg = F6_02_01(action, 1, 0, 0).encode_message(address)
             self.send_message(pressed_msg)
-            
-            released_msg = F6_02_01(action, 0, 0, 0).encode_message(address)
+            time.sleep(100/1000)          
+            released_msg = F6_02_01(action, 0, 0, 0).encode_message_released(address)
             self.send_message(released_msg)
 
         else:
@@ -217,6 +223,10 @@ class EltakoSwitchableLight(AbstractLightEntity):
     def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, sender_id: AddressExpression, sender_eep: EEP):
         """Initialize the Eltako light source."""
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep)
+        self.entity_description = LightEntityDescription(
+            key=None,
+            name=None,
+        )
         self._sender_id = sender_id
         self._sender_eep = sender_eep
 
