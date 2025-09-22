@@ -10,5 +10,5 @@
   "issue_tracker": "https://github.com/bertel2020/home-assistant-eltako/issues",
   "loggers": ["eltako"],
   "requirements": ["eltako14bus@git+https://github.com/bertel2020/eltako14bus.git@master", "enocean>=0.60.1", "StrEnum", "esp2-gateway-adapter==0.2.21"],
-  "version": "1.7.0"
+  "version": "1.8.0"
 }
