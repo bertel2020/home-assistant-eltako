@@ -164,3 +164,19 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     del hass.data[DATA_ELTAKO][gateway.dev_name]
 
     return True
+
+
+
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, config_entry: ConfigEntry, device_entry: dr.DeviceEntry
+) -> bool:
+    """Remove a config entry from a device."""
+    dev_reg = dr.async_get(hass)
+    dev_reg.async_update_device(
+        device_id=device_entry.id,
+        remove_config_entry_id=config_entry.entry_id,
+    )
+    LOGGER.debug("Device %s (%s) removed", device_entry.name, device_entry.id)
+    return True
