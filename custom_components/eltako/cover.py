@@ -7,7 +7,7 @@ from eltakobus.util import AddressExpression
 from eltakobus.eep import *
 
 from homeassistant import config_entries
-from homeassistant.components.cover import CoverEntity, CoverEntityFeature, ATTR_POSITION, ATTR_TILT_POSITION
+from homeassistant.components.cover import CoverEntity, CoverEntityDescription, CoverEntityFeature, ATTR_POSITION, ATTR_TILT_POSITION
 from homeassistant.const import CONF_DEVICE_CLASS, Platform, STATE_OPEN, STATE_OPENING, STATE_CLOSED, STATE_CLOSING
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -59,6 +59,10 @@ class EltakoCover(EltakoEntity, CoverEntity, RestoreEntity):
     def __init__(self, platform:str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, sender_id: AddressExpression, sender_eep: EEP, device_class: str, time_closes, time_opens, time_tilts):
         """Initialize the Eltako cover device."""
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep)
+        self.entity_description = CoverEntityDescription(
+            key=None,
+            name=None,
+        )
         self._sender_id = sender_id
         self._sender_eep = sender_eep
 
