@@ -719,10 +719,10 @@ class EltakoWeatherStation(EltakoSensor):
         
         elif self.entity_description.key == SENSOR_TYPE_WEATHER_STATION_TEMPERATURE:
             if decoded.identifier != 0x01:
-                LOGGER.debug(f"[EltakoWeatherStation] received message - temperature: {decoded.temperature}")
                 return
             
-            self._attr_native_value = decoded.temperature
+            LOGGER.debug(f"[EltakoWeatherStation] received message - temperature: {decoded.temperature}")
+            self._attr_native_value = round((decoded.temperature * 2), 0) / 2
         
         elif self.entity_description.key == SENSOR_TYPE_WEATHER_STATION_WIND_SPEED:
             if decoded.identifier != 0x01:
