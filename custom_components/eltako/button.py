@@ -23,6 +23,8 @@ from .gateway import EnOceanGateway
 from .const import *
 from . import get_gateway_from_hass, get_device_config_for_gateway
 
+import time
+
 EEP_WITH_TEACH_IN_BUTTONS = {
     A5_10_06: b'\x40\x30\x0D\x85',  # climate
     A5_10_12: b'\x40\x90\x0D\x80',  # climate
@@ -58,6 +60,8 @@ async def async_setup_entry(
                         try:
                             dev_config = config_helpers.DeviceConf(entity_config)
                             sender_config = config_helpers.get_device_conf(entity_config, CONF_SENDER)
+                            if platform_id == Platform.BUTTON:
+                                entities.append(EnoceanButton(platform, gateway, dev_config.id, dev_config.name, dev_config.eep, sender_config.id, sender_config.eep))
 
                             if sender_config.eep in EEP_WITH_TEACH_IN_BUTTONS.keys():
                                 entities.append(TeachInButton(platform, gateway, dev_config.id, dev_config.name, dev_config.eep, sender_config.id, sender_config.eep))
@@ -134,3 +138,48 @@ class GatewayReconnectButton(AbstractButton):
     async def async_press(self) -> None:
         """Reconnect serial bus"""
         self.gateway.reconnect()
+
+
+
+class EnoceanButton(AbstractButton):
+    """Button which sends on telegram."""
+
+    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, sender_id: AddressExpression, sender_eep: EEP):
+        _dev_name = dev_name
+        if _dev_name == "":
+            _dev_name = "Button"
+        self.entity_description = ButtonEntityDescription(
+            key="button",
+            name="Button",
+            icon="mdi:button-pointer",
+        )
+        self.sender_id = sender_id
+        self.sender_eep = sender_eep
+
+        super().__init__(platform, gateway, dev_id, _dev_name, dev_eep)
+
+    def press(self) -> None:
+        """
+        Handle the button press.
+        Send teach-in command
+        """
+
+        if self.sender_eep in [F6_02_01, F6_02_02]:
+            address, discriminator = self.sender_id
+            # in PCT14 function 02 'direct  pushbutton top on' needs to be configured
+            if discriminator == "left":
+                action = 1  # 0x30
+            elif discriminator == "right":
+                action = 3  # 0x70
+            else:
+                action = 1
+                
+            pressed_msg = F6_02_01(action, 1, 0, 0).encode_message(address)
+            self.send_message(pressed_msg)
+            time.sleep(100/1000)
+            released_msg = F6_02_01(action, 0, 0, 0).encode_message_released(address)
+            self.send_message(released_msg)
+
+        else:
+            LOGGER.warn("[%s %s] Sender EEP %s not supported.", Platform.BUTTON, str(self.dev_id), self._sender_eep.eep_string)
+            return
