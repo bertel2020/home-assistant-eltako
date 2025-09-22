@@ -10,6 +10,7 @@ from eltakobus.message import ESP2Message
 
 from homeassistant.components.climate import (
     ClimateEntity,
+    ClimateEntityDescription,
     HVACAction,
     HVACMode,
     ClimateEntityFeature
@@ -88,6 +89,7 @@ async def async_setup_entry(
                                                        thermostat, hygrostat, actuator, actuator_sender, actuator_meter, cooling_switch, cooling_sender)
                     entities.append(climate_entity)
 
+
                     # subscribe for cooling switch events
                     if cooling_switch is not None:
                         event_id = config_helpers.get_bus_event_type(gateway.base_id, EVENT_BUTTON_PRESSED, cooling_switch.id, 
@@ -121,13 +123,13 @@ def validate_ids_of_climate(entities:list[EltakoEntity]):
 class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
     """Representation of an Eltako heating and cooling actor."""
 
-    _update_frequency = 55 # sec
+    _update_frequency = 900 # sec
     _actuator_mode: A5_10_06.HeaterMode = None
     _hvac_mode_from_heating = HVACMode.HEAT
 
     COOLING_SWITCH_SIGNAL_FREQUENCY_IN_MIN: int = 15 # FTS14EM signals are repeated every 15min
 
-    _attr_hvac_action = None
+    _attr_hvac_action = "idle"
     _attr_hvac_mode = HVACMode.OFF
     _attr_fan_mode = None
     _attr_fan_modes = None
@@ -148,6 +150,10 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
                  thermostat: DeviceConf, hygrostat: DeviceConf, actuator: DeviceConf, actuator_sender: DeviceConf, actuator_meter: DeviceConf, cooling_switch: DeviceConf, cooling_sender: DeviceConf):
         """Initialize the Eltako heating and cooling source."""
         super().__init__(platform, gateway, dev_id, dev_name, dev_eep)
+        self.entity_description = ClimateEntityDescription(
+            key=None,
+            name=None,
+        )
         self._on_state = False
         self._sender_id = sender_id
         self._sender_eep = sender_eep
@@ -175,7 +181,7 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
         if self.actuator_meter:
             LOGGER.debug(f"[climate {self.dev_id}] Actuator meter found: {self.actuator_meter.id}, {self.actuator_meter.id[0]}")
             #LOGGER.debug(f"[climate {self.dev_id}] Actuator details: {self.actuator}")
-            #self.listen_to_addresses.append(self.actuator_meter.id[0])
+            self.listen_to_addresses.append(self.actuator_meter.id[0])
 
         LOGGER.debug(f"[Climate] Devices listening: {self.listen_to_addresses}")            
 
@@ -402,13 +408,17 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
                 LOGGER.debug(f"[climate {self.dev_id}] Change state triggered by actuator: {self.actuator.id}")
                 self.change_actuator_values(msg)
 
+        if self.actuator_meter:
+            actuator_meter_address, _ = self.actuator_meter.id
+            if msg.address == actuator_meter_address:
+                LOGGER.debug(f"[climate {self.dev_id}] Change state triggered by actuator meter: {self.actuator_meter.id}")
+                self.change_actuator_meter_values(msg)
 
         # Implemented via eventing: async_handle_event
         # if self.cooling_switch:
         #     if msg.address == self.cooling_switch.id[0]:
         #         LOGGER.debug(f"[climate {self.dev_id}] Change mode triggered by cooling switch: {self.cooling_switch.id[0]}")
         #         LOGGER.debug(f"NOT YET IMPLEMENTED")
-
 
     def change_temperature_values(self, msg: ESP2Message) -> None:
         try:
@@ -449,7 +459,7 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
 
         if  msg.org == 0x07 and self.hygrostat.eep in [A5_10_12]:
 
-            self._attr_current_humidity = decoded.humidity
+            self._attr_current_humidity = round(decoded.humidity, 0)
             #LOGGER.debug(f"Hygrostat decoded humidity: {self._current_humidity}")
         self.schedule_update_ha_state()
 
@@ -468,6 +478,27 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
                 self._attr_hvac_mode = HVACMode.OFF
             elif decoded.state == 1:
                 self._attr_hvac_mode = self._hvac_mode_from_heating
-            LOGGER.debug(f"Actuator decoded state: {decoded.state}")
+            LOGGER.debug(f"[climate {self.dev_id}] Actuator decoded state: {decoded.state}")
         self.schedule_update_ha_state()
 
+
+
+    def change_actuator_meter_values(self, msg: ESP2Message) -> None:
+        try:
+            if  msg.org == 0x07:
+                decoded = self.actuator_meter.eep.decode_message(msg)
+        except Exception as e:
+            LOGGER.warning(f"[climate {self.dev_id}] Could not decode message: %s", str(e))
+            return
+
+        if  msg.org == 0x07 and self.actuator_meter.eep in [A5_12_01]:
+
+            if decoded.data_type == 1 and decoded.meter_reading != 0:
+                LOGGER.debug(f"[climate {self.dev_id}] Actuator meter decoded state: {decoded.meter_reading}")
+                LOGGER.debug(f"[climate {self.dev_id}] Heating") 
+                self._attr_hvac_action = "heating"
+            elif decoded.data_type == 1 and decoded.meter_reading == 0:
+                LOGGER.debug(f"[climate {self.dev_id}] Actuator meter decoded state: {decoded.meter_reading}")
+                LOGGER.debug(f"[climate {self.dev_id}] Idle") 
+                self._attr_hvac_action = "idle"
+        self.schedule_update_ha_state()
