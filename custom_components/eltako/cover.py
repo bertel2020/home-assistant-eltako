@@ -85,6 +85,16 @@ class EltakoCover(EltakoEntity, CoverEntity, RestoreEntity):
             self._attr_supported_features |= CoverEntityFeature.SET_POSITION
 
 
+    @property
+    def extra_state_attributes(self):
+        """Return additional state attributes for this cover entity."""
+        return {
+            "time_opens": self._time_opens,
+            "time_closes": self._time_closes,
+            "time_tilts": self._time_tilts,
+        }
+
+
     def load_value_initially(self, latest_state:State):
         # LOGGER.debug(f"[cover {self.dev_id}] latest state: {latest_state.state}")
         # LOGGER.debug(f"[cover {self.dev_id}] latest state attributes: {latest_state.attributes}")
