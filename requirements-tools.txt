@@ -1,0 +1,3 @@
+# Legacy device-discovery tools (eltakodevice_discovery), not used by the
+# integration at runtime and not needed for the test suite.
+termcolor

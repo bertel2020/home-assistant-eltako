@@ -13,7 +13,6 @@ runtime requirements, plus the development host and legacy discovery tools.
 | eltako14bus 1.2 | fork, commit `6cb99f7fbee3391e348b9d3f1cffee61b7c816d8` | integration (`eltakobus`) | Eltako RS485 bus, ESP2 telegrams, EEP definitions |
 | enocean 0.60.1 | fork, commit `7956cce9365ae13dc057ba8bb09e2934fe5a1b2f` | adapter (`enocean`) | ESP3 packets and EEP database |
 | esp2-gateway-adapter 0.2.21+bertel.1 | fork, commit `450dcbe4567958f7e5acc617b930276b1810331a` | integration | ESP3 serial/TCP gateways presented as ESP2 |
-| StrEnum 0.4.15 | exact | integration (`const.py`, `from strenum import StrEnum`) | string enums for gateway device types |
 | pyserial 3.5 | exact | integration (`gateway.py`), eltako14bus, adapter | serial ports |
 | pyserial-asyncio 0.6 | exact | eltako14bus, adapter | async serial I/O |
 | aiocoap 0.4.17 | exact | eltako14bus (unconditional import) | CoAP module of the library |
@@ -65,7 +64,7 @@ These are not part of the manifest and are never installed by Home Assistant.
 | Package | Pin | Purpose |
 | --- | --- | --- |
 | homeassistant 2026.10.2 | exact | development host matching the verified production release (Python 3.14) |
-| termcolor | unpinned | legacy `eltakodevice_discovery` tools only |
+| termcolor | unpinned, `requirements-tools.txt` | legacy `eltakodevice_discovery` tools only |
 | packaging | transitive via HA | `tests/test_dependencies.py`, `tests/test_metadata.py` |
 | pytest | not in `requirements.txt` | installed separately by the CI workflow; the suite also runs with `unittest` |
 
@@ -103,11 +102,10 @@ runtime checks if Home Assistant is missing.
 
 ## CI
 
-`.github/workflows/test_on_push.yml` installs `requirements.txt` on
-`python-version: '3.x'` and runs `python -m unittest discover tests`. This is
-not pinned to the verified Python 3.14 and does not run the dependency tests
-separately as described above, so a green CI run is weaker evidence than the
-local procedure.
+`.github/workflows/test_on_push.yml` installs `requirements.txt` on Python 3.14,
+runs `pip check`, then the dependency and metadata tests separately. The full
+legacy suite runs afterwards with `continue-on-error`, so it does not block the
+build.
 
 ## Adapter correction and validation
 
@@ -123,10 +121,14 @@ communication and acceptance by physical gateways were not tested.
 
 ## Known open points
 
-- **pyserial-asyncio** is marked deprecated by HA 2026.10.2 for direct
-  integration requirements, with removal announced for 2027.2. The library and
-  adapter import it, so a migration must be coordinated across those packages
-  rather than changing only the manifest.
+- **pyserial-asyncio:** Home Assistant's developer blog (2026-01-05) announces
+  that installing it is blocked from HA 2026.7, with `pyserial-asyncio-fast`
+  (module `serial_asyncio_fast`) as drop-in replacement; the 2026-04-27 post
+  recommends `serialx` for pyserial and both asyncio variants. Only eltako14bus
+  imports it (`eltakobus/serial.py`); the adapter merely declared it. Migration:
+  eltako14bus 1.2.2 uses `pyserial-asyncio-fast`, the adapter drops the
+  dependency, then the manifest pins the new commits and replaces
+  `pyserial-asyncio==0.6`.
 - **Fork maintenance:** the three forks must be re-pinned by commit hash after
   every change; a branch or tag reference would break the immutability
   guarantee that the tests assert.
