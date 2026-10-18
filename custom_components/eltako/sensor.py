@@ -1091,6 +1091,13 @@ class GatewayInfoField(StaticInfoField):
                          )
         
     @property
+    def extra_state_attributes(self):
+        """Expose LAN connection details without changing the existing sensor ID/value."""
+        if self.entity_description.key == "Serial Path" and GatewayDeviceType.is_lan_gateway(self.gateway.dev_type):
+            return {"host": self.gateway.serial_path, "port": self.gateway.port}
+        return super().extra_state_attributes
+
+    @property
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(

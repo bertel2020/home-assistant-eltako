@@ -153,6 +153,12 @@ class EnOceanGateway:
                                                auto_reconnect=self._auto_reconnect)
 
         self._bus.set_status_changed_handler(self._fire_connection_state_changed_event)
+        LOGGER.debug(
+            "[Gateway %s] Initialized %s transport: path=%s, port=%s, baud_rate=%s, auto_reconnect=%s, message_delay=%s",
+            self.dev_id, self.native_protocol, self.serial_path,
+            self.port if GatewayDeviceType.is_lan_gateway(self.dev_type) else None,
+            self.baud_rate, self._auto_reconnect, self._message_delay,
+        )
 
 
     def _register_device(self) -> None:

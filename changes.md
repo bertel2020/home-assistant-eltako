@@ -1,6 +1,7 @@
 # Changes and Feature List
 
 ## Unreleased
+* Expose LAN host/port as attributes of the existing Serial Path sensor and add transport setup debug details; preserve entity IDs and values.
 * Validate saved climate/cover values, log invalid history and continue loading; preserve configured HVAC modes and intermediate cover positions (adapted from upstream 6bef4fc).
 * Replace deprecated logger.warn calls with logger.warning (adapted from upstream 602ecc9).
 * Pin eltako14bus and enocean to commit archives from bertel2020's repositories.
