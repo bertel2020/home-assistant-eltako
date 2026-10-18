@@ -25,7 +25,7 @@ class EltakoEntity(Entity):
     def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str="Device", dev_eep: EEP=None, description_key:str=None):
         """Initialize the device."""
         self._attr_has_entity_name = True
-        self._attr_should_poll = True
+        self._attr_should_poll = False  # local push: state is updated by bus telegrams
         #self._attr_name = None
         self._attr_ha_platform = platform
         self._attr_gateway = gateway
@@ -71,7 +71,7 @@ class EltakoEntity(Entity):
             },
             name=self.dev_name,
             manufacturer=MANUFACTURER,
-            model=self.dev_eep.eep_string,
+            model=self.dev_eep.eep_string if self.dev_eep else None,
             via_device=(DOMAIN, self.gateway.serial_path),
         )
     
@@ -191,12 +191,13 @@ def log_entities_to_be_added(entities:list[EltakoEntity], platform:Platform) -> 
              temp_eep = f"eep: {e.dev_eep.eep_string}),"
         LOGGER.debug(f"[{platform} {e.dev_id}] Add entity {e.dev_name} (id: {e.dev_id},{temp_eep} gw: {e.gateway.dev_name}) to Home Assistant.")
 
-def get_entity_from_hass(hass: HomeAssistant, domain:Platform, dev_id: AddressExpression) -> bool:
+def get_entity_from_hass(hass: HomeAssistant, domain:Platform, dev_id: AddressExpression) -> EltakoEntity | None:
     entity_platforms = hass.data[DATA_ENTITY_PLATFORM][DOMAIN]
     for platform in entity_platforms:
         if platform.domain == domain:
             for entity in platform.entities.values():
-                LOGGER.debug(f"checking entity type: {type(entity)}, dev_eep: {entity.dev_eep.eep_string}, dev_id: {entity.dev_id}")
+                eep_string = entity.dev_eep.eep_string if entity.dev_eep else None
+                LOGGER.debug(f"checking entity type: {type(entity)}, dev_eep: {eep_string}, dev_id: {entity.dev_id}")
                 if entity.dev_id == dev_id:
                     return entity
     return None

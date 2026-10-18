@@ -17,7 +17,7 @@ DEFAULT_GENERAL_SETTINGS = {
 
 class DeviceConf(dict):
     """Object representation of config."""
-    def __init__(self, config: ConfigType, extra_keys:list[str]=[]):
+    def __init__(self, config: ConfigType, extra_keys:list[str]=()):
         # merge everything into dict
         self.update(config)
         
@@ -54,7 +54,7 @@ class DeviceConf(dict):
     def get(self, key: str, default = None):
         return super().get(key, default)
 
-def get_device_conf(config: ConfigType, key: str, extra_keys:list[str]=[]) -> DeviceConf:
+def get_device_conf(config: ConfigType, key: str, extra_keys:list[str]=()) -> DeviceConf:
     if config is not None:
         if key in config.keys():
             return DeviceConf(config.get(key), extra_keys)
@@ -64,10 +64,9 @@ def get_general_settings_from_configuration(hass: HomeAssistant) -> dict:
     settings = DEFAULT_GENERAL_SETTINGS
     if hass and CONF_GERNERAL_SETTINGS in hass.data[DATA_ELTAKO][ELTAKO_CONFIG]:
         settings = hass.data[DATA_ELTAKO][ELTAKO_CONFIG][CONF_GERNERAL_SETTINGS]
-    
-    # LOGGER.debug(f"General Settings: {settings}")
 
-    return settings
+    # return a copy so callers can adjust settings without changing the shared defaults/config
+    return dict(settings)
 
 
 async def async_get_gateway_config(hass: HomeAssistant, CONFIG_SCHEMA: dict, get_integration_config=async_integration_yaml_config) -> dict:
@@ -124,11 +123,11 @@ def get_device_config(config: dict, id: int) -> dict:
                 return {}
     return None
 
-async def async_get_list_of_gateway_descriptions(hass: HomeAssistant, CONFIG_SCHEMA: dict, get_integration_config=async_integration_yaml_config, filter_out: list[str]=[]) -> dict:
+async def async_get_list_of_gateway_descriptions(hass: HomeAssistant, CONFIG_SCHEMA: dict, get_integration_config=async_integration_yaml_config, filter_out: list[str]=()) -> dict:
     config = await async_get_home_assistant_config(hass, CONFIG_SCHEMA, get_integration_config)
     return get_list_of_gateway_descriptions(config, filter_out)
 
-def get_list_of_gateway_descriptions(config: dict, filter_out: list[str]=[]) -> dict:
+def get_list_of_gateway_descriptions(config: dict, filter_out: list[str]=()) -> dict:
     """Compiles a list of all gateways in config."""
     result = {}
     if CONF_GATEWAY in config:

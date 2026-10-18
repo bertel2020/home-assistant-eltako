@@ -250,18 +250,20 @@ class EnOceanGateway:
         """Send an arbitrary message with the provided eep."""
         LOGGER.debug(f"[Service Send Message: {event.service}] Received event data: {event.data}")
         
+        sender_id_str = event.data.get("id", None)
         try:
-            sender_id_str = event.data.get("id", None)
             sender_id:AddressExpression = AddressExpression.parse(sender_id_str)
-        except:
+        except Exception:
             LOGGER.error(f"[Service Send Message: {event.service}] No valid sender id defined. (Given sender id: {sender_id_str})")
             return
 
+        sender_eep_str = event.data.get("eep", None)
         try:
-            sender_eep_str = event.data.get("eep", None)
             sender_eep:EEP = EEP.find(sender_eep_str)
-        except:
-            LOGGER.error(f"[Service Send Message: {event.service}] No valid sender id defined. (Given sender id: {sender_id_str})")
+        except Exception:
+            sender_eep = None
+        if sender_eep is None:
+            LOGGER.error(f"[Service Send Message: {event.service}] No valid EEP defined. (Given EEP: {sender_eep_str})")
             return
         
         # prepare all arguements for eep constructor
