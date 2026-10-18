@@ -1,5 +1,16 @@
 # Changes and Feature List
 
+## Unreleased
+* Pin eltako14bus and enocean to commit archives from bertel2020's repositories.
+* Also use the published bertel2020/esp2_gateway_adapter fork via its commit archive.
+* Align development requirements with the integration manifest and explicitly declare imported eltako14bus dependencies.
+* Use Python's UTC timezone instead of requiring pytz directly.
+* Add dependency provenance, import, EEP decoding and ESP2/ESP3 conversion smoke checks.
+* Document the known RPS conversion limitation of esp2-gateway-adapter 0.2.21.
+
+## Version 1.8.0
+* Existing production baseline. Unreleased dependency corrections are listed above.
+
 ## Version 1.5.8
 * Fixed dependency incompatibility with HA 2024.9
 

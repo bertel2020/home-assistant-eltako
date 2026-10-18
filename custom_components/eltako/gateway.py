@@ -2,7 +2,6 @@
 import glob
 
 from os.path import basename, normpath
-import pytz
 from datetime import datetime, UTC
 
 import serial
@@ -104,7 +103,7 @@ class EnOceanGateway:
     def _fire_last_message_received_event(self):
         if self._last_message_received_handler:
             self.hass.create_task(
-                self._last_message_received_handler( datetime.now(UTC).replace(tzinfo=pytz.UTC) )
+                self._last_message_received_handler(datetime.now(UTC))
             )
 
 

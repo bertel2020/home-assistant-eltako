@@ -3,6 +3,8 @@ import sys
 import unittest
 import json
 import site
+import importlib.metadata as metadata
+from packaging.requirements import Requirement
 
 class MetadataTest(unittest.TestCase):
 
@@ -18,16 +20,10 @@ class MetadataTest(unittest.TestCase):
         return None
 
     def get_installed_lib_version(self, lib_name:str):
-        
-        dir_name = self.find_lib_folder(lib_name)
-        if dir_name:
-            metadata_file = os.path.join(dir_name, 'METADATA')
-            with open(metadata_file, 'r') as f:
-                for l in f.readlines():
-                    if l.startswith('Version: '):
-                        return l.replace('Version: ', '').strip()    
+        try:
+            return metadata.version(lib_name)
+        except metadata.PackageNotFoundError:
             return None
-        return None
 
     def get_version_of_installed_eltako14bus(self):
         return self.get_installed_lib_version('eltako14bus')
@@ -37,12 +33,12 @@ class MetadataTest(unittest.TestCase):
         with open(manifest_filename, 'r') as f:
             return json.loads( f.read() )
 
-    def get_version_of_required_eltako14bus(self):
+    def get_requirement_of_eltako14bus(self):
         manifest = self.get_manifest()
 
         for r in manifest['requirements']:
             if r.startswith('eltako14bus'):
-                return r.split('==')[1].strip()
+                return Requirement(r)
         return None
     
     def get_version_of_eltako_integration(self):
@@ -51,14 +47,15 @@ class MetadataTest(unittest.TestCase):
     def test_check_all_installed_dependencies(self):
         manifest = self.get_manifest()
 
-        for r in manifest['requirements']:
-            if '==' in r:
-                lib_name = r.split('==')[0].strip()
-                required_version  = r.split('==')[1].strip()
-                installed_version = self.get_installed_lib_version(lib_name)
-
-                # if this test fails install specified libraries in manifest.json
-                self.assertEqual(required_version, installed_version)
+        for text in manifest['requirements']:
+            requirement = Requirement(text)
+            with self.subTest(requirement=text):
+                installed_version = self.get_installed_lib_version(requirement.name)
+                self.assertIsNotNone(installed_version)
+                self.assertIn(installed_version, requirement.specifier)
+                if requirement.url:
+                    direct = json.loads(metadata.distribution(requirement.name).read_text('direct_url.json'))
+                    self.assertEqual(direct['url'], requirement.url)
 
     
     def test_check_manifest_and_requirements_match(self):
@@ -74,11 +71,14 @@ class MetadataTest(unittest.TestCase):
 
     def test_eltako14bus_required_and_installed_is_the_same(self):
         installed = self.get_version_of_installed_eltako14bus()
-        required = self.get_version_of_required_eltako14bus()
+        required = self.get_requirement_of_eltako14bus()
 
         self.assertIsNotNone(installed)
         self.assertIsNotNone(required)
-        self.assertEqual(installed, required)
+        self.assertIn(installed, required.specifier)
+        if required.url:
+            direct = json.loads(metadata.distribution(required.name).read_text('direct_url.json'))
+            self.assertEqual(direct['url'], required.url)
 
     def test_if_changes_are_documented(self):
         changes_filename = os.path.join(os.getcwd(), 'changes.md')
