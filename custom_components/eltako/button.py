@@ -181,5 +181,5 @@ class EnoceanButton(AbstractButton):
             self.send_message(released_msg)
 
         else:
-            LOGGER.warn("[%s %s] Sender EEP %s not supported.", Platform.BUTTON, str(self.dev_id), self._sender_eep.eep_string)
+            LOGGER.warning("[%s %s] Sender EEP %s not supported.", Platform.BUTTON, str(self.dev_id), self._sender_eep.eep_string)
             return

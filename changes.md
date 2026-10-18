@@ -1,6 +1,7 @@
 # Changes and Feature List
 
 ## Unreleased
+* Replace deprecated logger.warn calls with logger.warning (adapted from upstream 602ecc9).
 * Pin eltako14bus and enocean to commit archives from bertel2020's repositories.
 * Also use the published bertel2020/esp2_gateway_adapter fork via its commit archive.
 * Align development requirements with the integration manifest and explicitly declare imported eltako14bus dependencies.
