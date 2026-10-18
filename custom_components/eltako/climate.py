@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from contextlib import suppress
 import time
 
 from eltakobus.util import AddressExpression
@@ -90,12 +91,6 @@ async def async_setup_entry(
                     entities.append(climate_entity)
 
 
-                    # subscribe for cooling switch events
-                    if cooling_switch is not None:
-                        event_id = config_helpers.get_bus_event_type(gateway.base_id, EVENT_BUTTON_PRESSED, cooling_switch.id, 
-                                                                     config_helpers.convert_button_pos_from_hex_to_str(cooling_switch.get(CONF_SWITCH_BUTTON)))
-                        LOGGER.debug(f"Subscribe for listening to cooling switch events: {event_id}")
-                        hass.bus.async_listen(event_id, climate_entity.async_handle_event)
             
             except Exception as e:
                 LOGGER.warning("[%s] Could not load configuration", platform)
@@ -201,8 +196,33 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
         self._attr_max_temp = max_temp
         self._attr_min_temp = min_temp
 
-        self._loop = asyncio.get_event_loop()
-        self._update_task = asyncio.ensure_future(self._wrapped_update(), loop=self._loop)
+        self._update_task: asyncio.Task | None = None
+
+    async def async_added_to_hass(self) -> None:
+        """Start entity-owned work only after HA has added the entity."""
+        await super().async_added_to_hass()
+        if self.cooling_switch is not None:
+            event_id = config_helpers.get_bus_event_type(
+                self.gateway.base_id, EVENT_BUTTON_PRESSED, self.cooling_switch.id,
+                config_helpers.convert_button_pos_from_hex_to_str(
+                    self.cooling_switch.get(CONF_SWITCH_BUTTON)
+                ),
+            )
+            self.async_on_remove(
+                self.hass.bus.async_listen(event_id, self.async_handle_event)
+            )
+        self._update_task = self.gateway.config_entry.async_create_background_task(
+            self.hass, self._wrapped_update(), f"Eltako climate {self.unique_id}"
+        )
+
+    async def async_will_remove_from_hass(self) -> None:
+        """Wait for periodic sending to stop before releasing the gateway."""
+        if self._update_task is not None:
+            self._update_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self._update_task
+            self._update_task = None
+        await super().async_will_remove_from_hass()
 
 
     def load_value_initially(self, latest_state:State):
