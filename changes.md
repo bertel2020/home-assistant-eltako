@@ -6,7 +6,7 @@
 * Align development requirements with the integration manifest and explicitly declare imported eltako14bus dependencies.
 * Use Python's UTC timezone instead of requiring pytz directly.
 * Add dependency provenance, import, EEP decoding and ESP2/ESP3 conversion smoke checks.
-* Document the known RPS conversion limitation of esp2-gateway-adapter 0.2.21.
+* Pin the corrected adapter 0.2.21+bertel.1 and verify RPS parsing as a passing regression.
 
 ## Version 1.8.0
 * Existing production baseline. Unreleased dependency corrections are listed above.

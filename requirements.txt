@@ -2,7 +2,7 @@
 eltako14bus @ https://github.com/bertel2020/eltako14bus/archive/76d0dba36311bbd7c2e2813133eaf4ca341d7ca1.zip
 enocean @ https://github.com/bertel2020/enocean/archive/7956cce9365ae13dc057ba8bb09e2934fe5a1b2f.zip
 StrEnum==0.4.15
-esp2-gateway-adapter @ https://github.com/bertel2020/esp2_gateway_adapter/archive/6ed3c67127d2b533c67540efcb4a3d8e2f235064.zip
+esp2-gateway-adapter @ https://github.com/bertel2020/esp2_gateway_adapter/archive/7c8d6fccd2be057a1264b533a84ed140ff855569.zip
 aiocoap==0.4.17
 pyserial==3.5
 pyserial-asyncio==0.6

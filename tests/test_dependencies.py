@@ -89,13 +89,8 @@ class RuntimeDependencyTests(unittest.TestCase):
                 if message.org == 0x07:
                     self.assertEqual(restored.serialize(), message.serialize())
 
-    @unittest.expectedFailure
-    def test_known_adapter_0_2_21_rps_output_is_parseable(self):
-        """Known external adapter defect: RPS output lacks optional data.
-
-        Keep visible as expected failure until the pinned adapter is repaired.
-        A passing result becomes an unexpected success and prompts reassessment.
-        """
+    def test_adapter_rps_output_is_parseable(self):
+        """The pinned adapter emits a complete, parseable RPS frame."""
         from eltakobus.eep import F6_02_01
         from esp2_gateway_adapter.esp3_serial_com import ESP3SerialCommunicator
         from enocean.protocol.packet import Packet

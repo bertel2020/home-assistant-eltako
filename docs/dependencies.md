@@ -11,7 +11,7 @@ runtime requirements, plus the development host and legacy discovery tools.
 | --- | --- |
 | eltako14bus 1.2 | bertel2020/eltako14bus, commit `76d0dba36311bbd7c2e2813133eaf4ca341d7ca1` |
 | enocean 0.60.1 | bertel2020/enocean, commit `7956cce9365ae13dc057ba8bb09e2934fe5a1b2f` |
-| esp2-gateway-adapter 0.2.21 | bertel2020/esp2_gateway_adapter, commit `6ed3c67127d2b533c67540efcb4a3d8e2f235064` |
+| esp2-gateway-adapter 0.2.21+bertel.1 | bertel2020/esp2_gateway_adapter, commit `7c8d6fccd2be057a1264b533a84ed140ff855569` |
 
 All three owned libraries are requested using immutable HTTPS commit archives.
 Installation does not require a Git executable, SSH credentials, or copying
@@ -66,32 +66,17 @@ ESP2/ESP3 conversion preserving payload, address and status. The 4BS test also
 checks byte-exact roundtrip. Run these tests separately: the legacy suite
 patches library functions globally during collection.
 
-## Known adapter limitation
+## Adapter correction and validation
 
-esp2-gateway-adapter 0.2.21 emits RPS frames with an empty optional-data section.
-Passing the generated serialized frame into enocean's packet parser raises
-`IndexError` when it reads the signal-strength field. RPS conversion back to
-ESP2 also loses the outgoing flag. These are observed software roundtrip
-limitations; no conclusion about acceptance by physical gateways is claimed.
-The regression is retained as a named expected-failure test, not hidden as a
-successful transport test. The 4BS sender uses six optional bytes; a complete
-on-device ESP3 protocol validation has not been performed.
+The pinned adapter fork version `0.2.21+bertel.1` supplies all seven ERP1
+optional bytes for RPS, 1BS and 4BS and preserves the outgoing marker.
+This fixes the RPS parser error and the loss of the outgoing flag in 0.2.21.
+Its package declaration and repository URL are corrected as well.
 
-The adapter needs a separate repair and hardware verification before claiming
-complete ESP3/RPS compatibility. ESP2 serial communication and the other device
-functions have not been exercised against hardware by this dependency audit.
-
-A repair is prepared in the separate local repository
-`/Users/roberto/GitHub/esp2_gateway_adapter`, branch
-`codex/fix-radio-optional-data`. It supplies all seven ERP1 optional bytes for
-RPS, 1BS and 4BS and preserves the outgoing marker. The built local wheel
-`0.2.21+bertel.1` passes six byte-exact software roundtrips (three telegram
-types, each incoming and outgoing) plus an unsupported-message check. Its
-package declaration and repository URL are corrected as well. This local
-repair is not published or referenced by the manifest yet. After publication,
-pin its new commit and replace the known-failure test with a normal passing
-regression test. The current manifest deliberately uses the published fork
-commit so that its URL remains installable.
+The adapter tests pass six byte-exact software roundtrips (three telegram
+types, each incoming and outgoing) plus an unsupported-message check.
+The integration includes a passing RPS parser regression test. Hardware
+communication and acceptance by physical gateways were not tested.
 
 pyserial-asyncio is marked deprecated by HA 2026.10.2 for direct integration
 requirements, with removal announced for 2027.2. The existing library and
