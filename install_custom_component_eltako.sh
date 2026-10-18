@@ -9,7 +9,7 @@ echo -e "\nInstall custom component for Eltako Baureihe 14\n"
 
 repo_name="home-assistant-eltako"
 if [[ $(pwd) != *"$repo_name"* ]]; then
-    repo_name="https://github.com/grimmpp/home-assistant-eltako.git"
+    repo_name="https://github.com/bertel2020/home-assistant-eltako.git"
     echo -e "Download repository $repo_name"
     exe git clone $repo_name
 else 
