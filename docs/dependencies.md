@@ -10,9 +10,9 @@ runtime requirements, plus the development host and legacy discovery tools.
 
 | Package | Pin | Used by | Purpose |
 | --- | --- | --- | --- |
-| eltako14bus 1.2 | fork, commit `76d0dba36311bbd7c2e2813133eaf4ca341d7ca1` | integration (`eltakobus`) | Eltako RS485 bus, ESP2 telegrams, EEP definitions |
+| eltako14bus 1.2 | fork, commit `6cb99f7fbee3391e348b9d3f1cffee61b7c816d8` | integration (`eltakobus`) | Eltako RS485 bus, ESP2 telegrams, EEP definitions |
 | enocean 0.60.1 | fork, commit `7956cce9365ae13dc057ba8bb09e2934fe5a1b2f` | adapter (`enocean`) | ESP3 packets and EEP database |
-| esp2-gateway-adapter 0.2.21+bertel.1 | fork, commit `7c8d6fccd2be057a1264b533a84ed140ff855569` | integration | ESP3 serial/TCP gateways presented as ESP2 |
+| esp2-gateway-adapter 0.2.21+bertel.1 | fork, commit `450dcbe4567958f7e5acc617b930276b1810331a` | integration | ESP3 serial/TCP gateways presented as ESP2 |
 | StrEnum 0.4.15 | exact | integration (`const.py`, `from strenum import StrEnum`) | string enums for gateway device types |
 | pyserial 3.5 | exact | integration (`gateway.py`), eltako14bus, adapter | serial ports |
 | pyserial-asyncio 0.6 | exact | eltako14bus, adapter | async serial I/O |

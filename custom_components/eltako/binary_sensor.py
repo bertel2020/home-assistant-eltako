@@ -72,6 +72,9 @@ async def async_setup_entry(
                             entities.append(EltakoBinarySensor(platform_id, gateway, dev_conf.id, name, dev_conf.eep, 
                                                                 dev_conf.get(CONF_DEVICE_CLASS), dev_conf.get(CONF_INVERT_SIGNAL),
                                                                 EntityDescription(key="low_battery", name=name) ))
+                        elif dev_conf.eep == D2_14_41:
+                            entities.append(EltakoBinarySensor(platform_id, gateway, dev_conf.id, dev_conf.name, dev_conf.eep,
+                                                                dev_conf.get(CONF_DEVICE_CLASS) or "window", dev_conf.get(CONF_INVERT_SIGNAL)))
                         elif dev_conf.eep == A5_13_01:
                             name = "Rain"
                             entities.append(EltakoBinarySensor(platform_id, gateway, dev_conf.id, name, dev_conf.eep, 
@@ -316,6 +319,12 @@ class EltakoBinarySensor(AbstractBinarySensor):
                 self._attr_is_on = decoded.contact == 0
             else:
                 self._attr_is_on = decoded.contact == 1
+
+        elif self.dev_eep in [D2_14_41]:
+            # contact: False=open, True=closed (reported as "on" when open, like D5-00-01)
+            self._attr_is_on = not decoded.contact
+            if self.invert_signal:
+                self._attr_is_on = not self._attr_is_on
 
         elif self.dev_eep in [A5_08_01]:
             # Occupancy Sensor

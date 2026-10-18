@@ -130,6 +130,17 @@ async def async_setup_entry(
                     entities.append(EltakoHumiditySensor(platform, gateway, dev_conf.id, dev_name, dev_conf.eep))
                     entities.append(EltakoCO2Sensor(platform, gateway, dev_conf.id, dev_name, dev_conf.eep))
                 
+                elif dev_conf.eep in [D2_00_01, D2_14_40, D2_14_41]:
+                    # VLD (RORG D2) sensors, received via ESP3 gateways only
+                    entities.append(EltakoTemperatureSensor(platform, gateway, dev_conf.id, dev_name, dev_conf.eep))
+                    entities.append(EltakoHumiditySensor(platform, gateway, dev_conf.id, dev_name, dev_conf.eep))
+                    entities.append(EltakoIlluminationSensor(platform, gateway, dev_conf.id, dev_name, dev_conf.eep))
+                    if dev_conf.eep in [D2_14_40, D2_14_41]:
+                        for description, attribute in ((SENSOR_DESC_ACCELERATION_X, "acceleration_x"),
+                                                       (SENSOR_DESC_ACCELERATION_Y, "acceleration_y"),
+                                                       (SENSOR_DESC_ACCELERATION_Z, "acceleration_z")):
+                            entities.append(EltakoAccelerationSensor(platform, gateway, dev_conf.id, dev_name, dev_conf.eep, description, attribute))
+
                 elif dev_conf.eep in [A5_09_0C]:
                 ### Eltako FLGTF only supports VOCT Total
                     for t in VOC_SubstancesType:
@@ -456,9 +467,36 @@ class EltakoTemperatureSensor(EltakoSensor):
             LOGGER.warning("[Temperature Sensor %s] Could not decode message: %s", self.dev_id, str(e))
             return
         
-        self._attr_native_value = decoded.current_temperature
+        # VLD profiles (D2-xx-xx) only provide `temperature`
+        self._attr_native_value = decoded.current_temperature if hasattr(decoded, "current_temperature") else decoded.temperature
 
         self.schedule_update_ha_state()
+
+class EltakoAccelerationSensor(EltakoSensor):
+    """Representation of one acceleration axis of a VLD multisensor.
+    EEPs (EnOcean Equipment Profiles):
+    - D2-14-40, D2-14-41
+    """
+
+    def __init__(self, platform: str, gateway: EnOceanGateway, dev_id: AddressExpression, dev_name: str, dev_eep: EEP, description: EltakoSensorEntityDescription, attribute: str) -> None:
+        _dev_name = dev_name
+        if _dev_name == "":
+            _dev_name = DEFAULT_DEVICE_NAME_THERMOMETER
+        super().__init__(platform, gateway, dev_id, _dev_name, dev_eep, description)
+        self._attribute = attribute
+
+    def value_changed(self, msg: ESP2Message):
+        """Update the internal state of the sensor."""
+        try:
+            decoded = self.dev_eep.decode_message(msg)
+        except Exception as e:
+            LOGGER.warning("[Acceleration Sensor %s] Could not decode message: %s", self.dev_id, str(e))
+            return
+
+        self._attr_native_value = getattr(decoded, self._attribute)
+
+        self.schedule_update_ha_state()
+
 
 class EltakoIlluminationSensor(EltakoSensor):
     """Brightness sensor"""

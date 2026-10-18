@@ -1,7 +1,7 @@
 """Representation of an Eltako device."""
 from datetime import datetime
 
-from eltakobus.message import ESP2Message, EltakoWrappedRPS, EltakoWrapped1BS, EltakoWrapped4BS, RPSMessage, Regular4BSMessage, Regular1BSMessage
+from eltakobus.message import ESP2Message, EltakoWrappedRPS, EltakoWrapped1BS, EltakoWrapped4BS, RPSMessage, Regular4BSMessage, Regular1BSMessage, RegularVLDMessage
 from eltakobus.util import AddressExpression
 from eltakobus.eep import EEP
 
@@ -162,7 +162,7 @@ class EltakoEntity(Entity):
     def _message_received_callback(self, msg: ESP2Message) -> None:
         """Handle incoming messages."""
         
-        msg_types = [EltakoWrappedRPS, EltakoWrapped1BS, EltakoWrapped4BS, RPSMessage, Regular1BSMessage, Regular4BSMessage]
+        msg_types = [EltakoWrappedRPS, EltakoWrapped1BS, EltakoWrapped4BS, RPSMessage, Regular1BSMessage, Regular4BSMessage, RegularVLDMessage]
 
         if type(msg) in msg_types:
             if msg.address in self.listen_to_addresses:

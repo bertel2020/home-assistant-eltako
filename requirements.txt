@@ -1,8 +1,8 @@
 # Runtime requirements: keep in sync with custom_components/eltako/manifest.json.
-eltako14bus @ https://github.com/bertel2020/eltako14bus/archive/76d0dba36311bbd7c2e2813133eaf4ca341d7ca1.zip
+eltako14bus @ https://github.com/bertel2020/eltako14bus/archive/6cb99f7fbee3391e348b9d3f1cffee61b7c816d8.zip
 enocean @ https://github.com/bertel2020/enocean/archive/7956cce9365ae13dc057ba8bb09e2934fe5a1b2f.zip
 StrEnum==0.4.15
-esp2-gateway-adapter @ https://github.com/bertel2020/esp2_gateway_adapter/archive/7c8d6fccd2be057a1264b533a84ed140ff855569.zip
+esp2-gateway-adapter @ https://github.com/bertel2020/esp2_gateway_adapter/archive/450dcbe4567958f7e5acc617b930276b1810331a.zip
 aiocoap==0.4.17
 pyserial==3.5
 pyserial-asyncio==0.6
