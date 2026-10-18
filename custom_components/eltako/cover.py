@@ -75,6 +75,12 @@ class EltakoCover(EltakoEntity, CoverEntity, RestoreEntity):
         self._time_closes = time_closes
         self._time_opens = time_opens
         self._time_tilts = time_tilts
+
+        # Actual runtime as reported by the actuator itself (from the last
+        # received EnOcean telegram), as opposed to the configured
+        # time_opens/time_closes values above.
+        self._last_reported_runtime = None  # seconds
+        self._last_reported_direction = None  # "open" / "close"
         
         self._attr_supported_features = (CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE | CoverEntityFeature.STOP)
         
@@ -92,6 +98,8 @@ class EltakoCover(EltakoEntity, CoverEntity, RestoreEntity):
             "time_opens": self._time_opens,
             "time_closes": self._time_closes,
             "time_tilts": self._time_tilts,
+            "last_reported_runtime": self._last_reported_runtime,
+            "last_reported_direction": self._last_reported_direction,
         }
 
 
@@ -99,8 +107,14 @@ class EltakoCover(EltakoEntity, CoverEntity, RestoreEntity):
         # LOGGER.debug(f"[cover {self.dev_id}] latest state: {latest_state.state}")
         # LOGGER.debug(f"[cover {self.dev_id}] latest state attributes: {latest_state.attributes}")
         try:
-            self._attr_current_cover_position = latest_state.attributes['current_position']
-            self._attr_current_cover_tilt_position = latest_state.attributes['current_tilt_position']
+            self._attr_current_cover_position = latest_state.attributes.get('current_position')
+            self._attr_current_cover_tilt_position = latest_state.attributes.get('current_tilt_position')
+
+            # Restore the actuator-reported runtime/direction as well, so they
+            # survive a Home Assistant restart. Use .get() (not [...]) since
+            # states saved before this feature existed won't have these keys.
+            self._last_reported_runtime = latest_state.attributes.get('last_reported_runtime')
+            self._last_reported_direction = latest_state.attributes.get('last_reported_direction')
 
             #if self._attr_current_cover_tilt_position == 0:
             #    self._attr_current_cover_tilt_position = 0
@@ -108,14 +122,21 @@ class EltakoCover(EltakoEntity, CoverEntity, RestoreEntity):
                 self._attr_is_opening = False
                 self._attr_is_closing = False
                 self._attr_is_closed = False
-                self._attr_current_cover_position = 100
-                self._attr_current_cover_tilt_position = 100
+                # STATE_OPEN only means "not fully closed" (is_closed == False),
+                # NOT "position == 100". Only fall back to 100 if no actual
+                # position/tilt value could be restored above.
+                if self._attr_current_cover_position is None:
+                    self._attr_current_cover_position = 100
+                if self._attr_current_cover_tilt_position is None:
+                    self._attr_current_cover_tilt_position = 100
             elif latest_state.state == STATE_CLOSED:
                 self._attr_is_opening = False
                 self._attr_is_closing = False
                 self._attr_is_closed = True
-                self._attr_current_cover_position = 0
-                self._attr_current_cover_tilt_position = 0
+                if self._attr_current_cover_position is None:
+                    self._attr_current_cover_position = 0
+                if self._attr_current_cover_tilt_position is None:
+                    self._attr_current_cover_tilt_position = 0
             elif latest_state.state == STATE_CLOSING:
                 self._attr_is_opening = False
                 self._attr_is_closing = True
@@ -298,6 +319,11 @@ class EltakoCover(EltakoEntity, CoverEntity, RestoreEntity):
             elif decoded.time is not None and decoded.direction is not None and self._time_closes is not None and self._time_opens is not None:
 
                 time_in_seconds = decoded.time / 10.0
+
+                # Record the runtime as actually reported by the actuator itself,
+                # independent of the position calculation below.
+                self._last_reported_runtime = time_in_seconds
+                self._last_reported_direction = "open" if decoded.direction == 0x01 else "close"
 
                 if decoded.direction == 0x01:  # up
                     # If the latest state is unknown, the cover position
