@@ -83,7 +83,7 @@ While this is not integrated into home assistant's repositories. You need to ins
   
    Click on the button below to automatically navigate to the repository within HACS, add and download it.
 
-   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=grimmpp&repository=home-assistant-eltako&category=integration)
+   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=bertel2020&repository=home-assistant-eltako&category=integration)
    
    *Alternative1:* Simply enter the URL of this repo. It will then be listed in HACS and also shows when new updates are available. [Detailed Docs in HACS Custom Repositories](https://hacs.xyz/docs/faq/custom_repositories/)
 
