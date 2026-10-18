@@ -11,4 +11,3 @@ PyYAML==6.0.3
 # Development/test host matching the verified production HA release (Python 3.14).
 homeassistant==2026.10.2
 # Legacy device-discovery tools, not used by the integration at runtime.
-termcolor

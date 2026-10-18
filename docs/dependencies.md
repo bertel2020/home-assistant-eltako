@@ -65,13 +65,8 @@ These are not part of the manifest and are never installed by Home Assistant.
 | Package | Pin | Purpose |
 | --- | --- | --- |
 | homeassistant 2026.10.2 | exact | development host matching the verified production release (Python 3.14) |
-| termcolor | unpinned | legacy `eltakodevice_discovery` tools only |
 | packaging | transitive via HA | `tests/test_dependencies.py`, `tests/test_metadata.py` |
 | pytest | not in `requirements.txt` | installed separately by the CI workflow; the suite also runs with `unittest` |
-
-The legacy discovery tools (`eltakodevice_discovery/`) additionally need
-`tkinter` (`dd_gui.py`), which is a system package and cannot be installed by
-pip. They are not used by the integration at runtime.
 
 ## Verified environment and tests
 
