@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from .restore import restore_number
 from contextlib import suppress
 import time
 
@@ -231,15 +232,10 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
         # LOGGER.debug(f"[climate {self.dev_id}] latest state - attributes: {latest_state.attributes}")
 
         try:
-            self.hvac_modes = []
-            for m_str in latest_state.attributes.get('hvac_modes', []):
-                for m_enum in HVACMode:
-                    if m_str == m_enum.value:
-                        self.hvac_modes.append(m_enum)
-
-            self._attr_current_temperature = latest_state.attributes.get('current_temperature', None)
-            self._attr_current_humidity = latest_state.attributes.get('current_humidity', None)
-            self._attr_target_temperature = latest_state.attributes.get('temperature', None)
+            # Supported modes come from configuration, never from saved state.
+            self._attr_current_temperature = restore_number(latest_state.attributes.get('current_temperature'))
+            self._attr_current_humidity = restore_number(latest_state.attributes.get('current_humidity'), minimum=0, maximum=100)
+            self._attr_target_temperature = restore_number(latest_state.attributes.get('temperature'))
 
             self._attr_hvac_mode = None
             for m_enum in HVACMode:
@@ -247,13 +243,13 @@ class ClimateController(EltakoEntity, ClimateEntity, RestoreEntity):
                     self._attr_hvac_mode = m_enum
                     break
                 
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError):
             self._attr_hvac_mode = None
             self._attr_current_temperature = None
-            self._current_humidity = None
+            self._attr_current_humidity = None
             self._attr_target_temperature = None
-            raise e
-        
+            LOGGER.warning("[climate %s] Invalid saved state; waiting for fresh device data.", self.dev_id, exc_info=True)
+
         self.schedule_update_ha_state()
 
         LOGGER.debug(f"[climate {self.dev_id}] value initially loaded: [state: {self.state}, modes: [{self.hvac_modes}], current temp: {self.current_temperature}, target temp: {self.target_temperature}]")

@@ -1,6 +1,8 @@
 """Support for Eltako covers."""
 from __future__ import annotations
 
+from .restore import restore_number
+
 from typing import Any
 
 from eltakobus.util import AddressExpression
@@ -107,14 +109,19 @@ class EltakoCover(EltakoEntity, CoverEntity, RestoreEntity):
         # LOGGER.debug(f"[cover {self.dev_id}] latest state: {latest_state.state}")
         # LOGGER.debug(f"[cover {self.dev_id}] latest state attributes: {latest_state.attributes}")
         try:
-            self._attr_current_cover_position = latest_state.attributes.get('current_position')
-            self._attr_current_cover_tilt_position = latest_state.attributes.get('current_tilt_position')
+            self._attr_current_cover_position = restore_number(latest_state.attributes.get('current_position'), minimum=0, maximum=100)
+            self._attr_current_cover_tilt_position = restore_number(latest_state.attributes.get('current_tilt_position'), minimum=0, maximum=100)
 
             # Restore the actuator-reported runtime/direction as well, so they
             # survive a Home Assistant restart. Use .get() (not [...]) since
             # states saved before this feature existed won't have these keys.
-            self._last_reported_runtime = latest_state.attributes.get('last_reported_runtime')
+            self._last_reported_runtime = restore_number(latest_state.attributes.get('last_reported_runtime'), minimum=0)
             self._last_reported_direction = latest_state.attributes.get('last_reported_direction')
+            if self._last_reported_direction not in (None, 'open', 'close'):
+                raise ValueError("Invalid saved cover direction")
+            self._attr_is_opening = None
+            self._attr_is_closing = None
+            self._attr_is_closed = None
 
             #if self._attr_current_cover_tilt_position == 0:
             #    self._attr_current_cover_tilt_position = 0
@@ -146,14 +153,16 @@ class EltakoCover(EltakoEntity, CoverEntity, RestoreEntity):
                 self._attr_is_closing = False
                 self._attr_is_closed = False
             
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError):
             self._attr_current_cover_position = None
             self._attr_current_cover_tilt_position = None
+            self._last_reported_runtime = None
+            self._last_reported_direction = None
             self._attr_is_opening = None
             self._attr_is_closing = None
-            self._attr_is_closed = None # means undefined state
-            raise e
-        
+            self._attr_is_closed = None
+            LOGGER.warning("[cover %s] Invalid saved state; waiting for fresh device data.", self.dev_id, exc_info=True)
+
         self.schedule_update_ha_state()
         LOGGER.debug(f"[cover {self.dev_id}] value initially loaded: [" 
                      + f"is_opening: {self.is_opening}, "

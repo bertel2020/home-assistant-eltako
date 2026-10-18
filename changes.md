@@ -1,6 +1,7 @@
 # Changes and Feature List
 
 ## Unreleased
+* Validate saved climate/cover values, log invalid history and continue loading; preserve configured HVAC modes and intermediate cover positions (adapted from upstream 6bef4fc).
 * Replace deprecated logger.warn calls with logger.warning (adapted from upstream 602ecc9).
 * Pin eltako14bus and enocean to commit archives from bertel2020's repositories.
 * Also use the published bertel2020/esp2_gateway_adapter fork via its commit archive.
