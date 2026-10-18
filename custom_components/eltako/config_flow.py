@@ -76,7 +76,11 @@ class EltakoFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         # get available (not registered) gateways
         g_list_dict = (await config_helpers.async_get_list_of_gateway_descriptions(self.hass, CONFIG_SCHEMA))
         # filter out registered gateways. all registered gateways are listen in data section
-        g_list = list([g for g in g_list_dict.values() if g not in self.hass.data[DATA_ELTAKO]])
+        registered = {
+            config_helpers.normalize_gateway_description(e.data[CONF_GATEWAY_DESCRIPTION])
+            for e in self._async_current_entries() if CONF_GATEWAY_DESCRIPTION in e.data
+        }
+        g_list = list([g for g in g_list_dict.values() if g not in registered])
         LOGGER.debug("Available gateways to be added: %s", g_list)
         if len(g_list) == 0:
             LOGGER.debug("No gateways are configured in the 'configuration.yaml'.")

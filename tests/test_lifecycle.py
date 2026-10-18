@@ -49,7 +49,7 @@ class LifecycleTests(unittest.IsolatedAsyncioTestCase):
     def integration(self, gateway, unload_ok):
         platforms = ["climate", "sensor"]
         other = object()
-        data = {"gateway": gateway, "old alias": gateway, "other": other, "config": {"keep": True}}
+        data = {"other": other, "config": {"keep": True}}
         hass = SimpleNamespace(
             data={"eltako": data},
             config_entries=SimpleNamespace(async_unload_platforms=AsyncMock(return_value=unload_ok)),
@@ -60,21 +60,20 @@ class LifecycleTests(unittest.IsolatedAsyncioTestCase):
         })
         return ns["async_unload_entry"], hass, data, other, platforms
 
-    async def test_unload_removes_aliases_only_after_platforms_and_gateway(self):
+    async def test_unload_stops_gateway_only_after_platforms_and_keeps_shared_data(self):
         gateway = SimpleNamespace(dev_name="gateway")
         unload, hass, data, other, platforms = self.integration(gateway, True)
         entry = object()
 
         async def stop_gateway():
             hass.config_entries.async_unload_platforms.assert_awaited_once_with(entry, platforms)
-            self.assertIs(data["gateway"], gateway)
 
         gateway.async_unload = AsyncMock(side_effect=stop_gateway)
         self.assertTrue(await unload(hass, entry))
         gateway.async_unload.assert_awaited_once()
         self.assertEqual(data, {"other": other, "config": {"keep": True}})
 
-    async def test_failed_platform_unload_preserves_gateway_and_aliases(self):
+    async def test_failed_platform_unload_preserves_gateway(self):
         gateway = SimpleNamespace(dev_name="gateway", async_unload=AsyncMock())
         unload, hass, data, _, _ = self.integration(gateway, False)
         before = data.copy()

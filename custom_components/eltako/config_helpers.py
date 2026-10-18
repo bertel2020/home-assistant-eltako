@@ -161,6 +161,11 @@ def compare_enocean_ids(id1: bytes, id2: bytes, len=3) -> bool:
             return False
     return True
 
+def normalize_gateway_description(description: str) -> str:
+    """Map gateway descriptions created before v1.3.4 ('ESP2' in the name) to the current naming."""
+    return description.replace(OLD_GATEWAY_DEFAULT_NAME, GATEWAY_DEFAULT_NAME)
+
+
 def get_gateway_name(dev_name:str, dev_type:str, dev_id: int, base_id:AddressExpression) -> str:
     if not dev_name or len(dev_name) == 0:
         dev_name = GATEWAY_DEFAULT_NAME
