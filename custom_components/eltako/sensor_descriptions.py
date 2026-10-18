@@ -32,7 +32,7 @@ from homeassistant.const import (
     PERCENTAGE,
     CONF_LANGUAGE,
     UnitOfElectricPotential,
-    CONCENTRATION_PARTS_PER_MILLION,
+    UnitOfRatio,
 )
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
@@ -290,7 +290,7 @@ SENSOR_DESC_HUMIDITY = EltakoSensorEntityDescription(
 SENSOR_DESC_CO2 = EltakoSensorEntityDescription(
     key=SENSOR_TYPE_CO2,
     name="CO2",
-    native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+    native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
     icon="mdi:molecule-co2",
     device_class=SensorDeviceClass.CO2,
     state_class=SensorStateClass.MEASUREMENT,

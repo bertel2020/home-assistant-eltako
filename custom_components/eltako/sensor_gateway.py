@@ -32,7 +32,6 @@ from homeassistant.const import (
     PERCENTAGE,
     CONF_LANGUAGE,
     UnitOfElectricPotential,
-    CONCENTRATION_PARTS_PER_MILLION,
 )
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
