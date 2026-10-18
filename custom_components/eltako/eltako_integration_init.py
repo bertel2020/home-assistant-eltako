@@ -160,8 +160,16 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     gateway = get_gateway_from_hass(hass, config_entry)
 
     LOGGER.info("Unload %s and all its supported devices!", gateway.dev_name)
-    gateway.unload()
-    del hass.data[DATA_ELTAKO][gateway.dev_name]
+    if not await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS):
+        return False
+
+    await gateway.async_unload()
+    # Compatibility names may point to the same gateway. Remove all aliases,
+    # while leaving configuration and other gateways intact.
+    eltako_data = hass.data[DATA_ELTAKO]
+    for key, value in list(eltako_data.items()):
+        if value is gateway:
+            del eltako_data[key]
 
     return True
 

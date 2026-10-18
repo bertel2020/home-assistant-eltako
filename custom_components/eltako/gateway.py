@@ -65,6 +65,7 @@ class EnOceanGateway:
         self.general_settings = general_settings
         self._attr_dev_id = dev_id
         self._attr_base_id = base_id
+        self.config_entry = config_entry
         self.config_entry_id = config_entry.entry_id
 
         self._last_message_received_handler = None
@@ -289,14 +290,25 @@ class EnOceanGateway:
         dispatcher_send(self.hass, event_id, msg)
 
 
-    def unload(self):
-        """Disconnect callbacks established at init time."""
+    async def async_unload(self):
+        """Disconnect callbacks and stop the bus without blocking HA."""
+        self.hass.services.async_remove(
+            DOMAIN, f"gateway_{self._attr_dev_id}_send_message"
+        )
         if self.dispatcher_disconnect_handle:
-            self._bus.stop()
-            self._bus.join()
-            LOGGER.debug("[Gateway] [Id: %d] Was stopped.", self.dev_id)
             self.dispatcher_disconnect_handle()
             self.dispatcher_disconnect_handle = None
+
+        self._last_message_received_handler = None
+        self._connection_state_handler = None
+        self._received_message_count_handler = None
+        await self.hass.async_add_executor_job(self._stop_bus)
+
+    def _stop_bus(self):
+        """Wait for the bus thread in an executor worker."""
+        self._bus.stop()
+        self._bus.join()
+        LOGGER.debug("[Gateway] [Id: %d] Was stopped.", self.dev_id)
 
 
     def _callback_send_message_to_serial_bus(self, msg):
