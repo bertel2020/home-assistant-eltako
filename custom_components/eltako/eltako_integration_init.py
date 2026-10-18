@@ -4,6 +4,7 @@ from homeassistant.const import CONF_NAME
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.reload import async_reload_integration_platforms
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryError
 from homeassistant.helpers import entity_registry as er, device_registry as dr, entity_platform as pl
 
 from .const import *
@@ -74,8 +75,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     # Check domain
     if config_entry.domain != DOMAIN:
-        LOGGER.warning(f"[{LOG_PREFIX}] Ooops, received configuration entry of wrong domain '%s' (expected: '')!", config_entry.domain, DOMAIN)
-        return
+        LOGGER.warning("[%s] Received configuration entry of wrong domain '%s' (expected: '%s')!", LOG_PREFIX, config_entry.domain, DOMAIN)
+        return False
 
     
     # Read the config
@@ -83,7 +84,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     # Check if gateway ids are unique
     if not config_helpers.config_check_gateway(config):
-        raise Exception("Gateway Ids are not unique.")
+        raise ConfigEntryError("Gateway ids in the configuration are not unique.")
 
 
     # set config for global access
@@ -99,34 +100,29 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     # Initialise the gateway
     # get base_id from user input
     if CONF_GATEWAY_DESCRIPTION not in config_entry.data.keys():
-        LOGGER.warning("[{LOG_PREFIX}] Ooops, device information for gateway is not available. Try to delete and recreate the gateway.")
-        return
+        raise ConfigEntryError("Device information for the gateway is not available. Try to delete and recreate the gateway.")
     gateway_description = config_entry.data[CONF_GATEWAY_DESCRIPTION]    # from user input
     if not ('(' in gateway_description and ')' in gateway_description):
-        LOGGER.warning("[{LOG_PREFIX}] Ooops, no base id of gateway available. Try to delete and recreate the gateway.")
-        return
+        raise ConfigEntryError("No base id of the gateway available. Try to delete and recreate the gateway.")
     gateway_id = config_helpers.get_id_from_name(gateway_description)
     
     # get home assistant configuration section matching base_id
     gateway_config = await config_helpers.async_find_gateway_config_by_id(gateway_id, hass, CONFIG_SCHEMA)
     if not gateway_config:
-        LOGGER.warning(f"[{LOG_PREFIX}] Ooops, no gateway configuration found in '/homeassistant/configuration.yaml'.")
-        return
+        raise ConfigEntryError(f"No configuration for gateway id {gateway_id} found in 'configuration.yaml'.")
     
     # get serial path info
     if CONF_SERIAL_PATH not in config_entry.data.keys():
-        LOGGER.warning("[{LOG_PREFIX}] Ooops, no information about serial path available for gateway.")
-        return
+        raise ConfigEntryError("No information about the serial path available for the gateway.")
     gateway_serial_path = config_entry.data[CONF_SERIAL_PATH]
 
     # only transceiver can send teach-in telegrams
     gateway_device_type = GatewayDeviceType.find(gateway_config[CONF_DEVICE_TYPE])    # from configuration
     if gateway_device_type is None:
-        LOGGER.error(f"[{LOG_PREFIX}] USB device {gateway_config[CONF_DEVICE_TYPE]} is not supported!!!")
-        return False
+        raise ConfigEntryError(f"Gateway device type '{gateway_config[CONF_DEVICE_TYPE]}' is not supported.")
     if gateway_device_type == GatewayDeviceType.LAN:
         if gateway_config.get(CONF_GATEWAY_ADDRESS, None) is None:
-            raise Exception(f"Missing field '{CONF_GATEWAY_ADDRESS}' for LAN Gateway (id: {gateway_id})")
+            raise ConfigEntryError(f"Missing field '{CONF_GATEWAY_ADDRESS}' for LAN Gateway (id: {gateway_id})")
 
     general_settings[CONF_ENABLE_TEACH_IN_BUTTONS] = True # GatewayDeviceType.is_transceiver(gateway_device_type) # should only be disabled for decentral gateways
 
