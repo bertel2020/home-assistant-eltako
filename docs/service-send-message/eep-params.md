@@ -1,7 +1,7 @@
 # EEP parameters for the Send Message service
 
-Generated from the [manifest-pinned bertel2020 library](https://github.com/bertel2020/eltako14bus/archive/76d0dba36311bbd7c2e2813133eaf4ca341d7ca1.zip)
-(package version 1.2).
+Generated from the [manifest-pinned bertel2020 library](https://github.com/bertel2020/eltako14bus/archive/f3c16278312ade28e5972bea5f5ff425469f9bbe.zip)
+(package version 1.2.2).
 Regenerate with `python -m tools.generate_eep_params` after installing `requirements.txt`.
 
 These are constructor parameter names, not a guarantee that every profile can be sent.
@@ -41,6 +41,9 @@ the custom climate controller, whose existing send path is unchanged.
 - `A5-13-01`: dawn_sensor, day_night, hemisphere, identifier, learn_button, rain_indication, sun_east, sun_south, sun_west, temperature, wind_speed
 - `A5-30-01`: battery_status, contact_status, learn_button
 - `A5-30-03`: digital_input_0, digital_input_1, digital_input_2, digital_input_3, learn_button, status_of_wake, temperature
+- `D2-00-01`: battery_state, burglary_alarm, button_left, button_right, handle_position, humidity, illumination, message_type, motion, protection_alarm, temperature, vacation_mode, window_state
+- `D2-14-40`: acceleration_status, acceleration_x, acceleration_y, acceleration_z, humidity, illumination, temperature
+- `D2-14-41`: acceleration_status, acceleration_x, acceleration_y, acceleration_z, contact, humidity, illumination, temperature
 - `D5-00-01`: contact, learn_button
 - `F6-01-01`: button_pushed
 - `F6-02-01`: energy_bow, rocker_first_action, rocker_second_action, second_action
