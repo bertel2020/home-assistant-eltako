@@ -21,7 +21,7 @@ See example snipped to declare your switch:
 
 After you have registered the switch in Home Assistant configuration and after you have restarted Home Assistant you can see messages in the logger view. (Debugging must be enabled.)
 
-<img src="screenshot_logging.png" alt="Exemplary screenshot about logging." height="300" />
+<img src="../logging/screenshot_logging.png" alt="Exemplary screenshot about logging." height="300" />
 
 ## Create automatin listening on switch events
 

@@ -60,7 +60,7 @@ You can use its usb port to connect it to Home Assistant.
 | Address space | 128 internal address can be used for actuators. If you need more you can increase your setup by a second RS485 bus incl. dedicated FAM14. |
 
 #### Pros
-* Can read memory of actuators. You can use it to [auto-generate a configuration file for Home Assistant](../../eltakodevice_discovery/readme.md). 
+* Can read memory of actuators.
 * Not dependent on wireless network. Very stable connection.
 * Receives internal command on the RS485 bu. E.g. telegrams from rocker switches conncted via wires to FTS14EM.
 

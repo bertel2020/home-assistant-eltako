@@ -3,7 +3,7 @@
 The runtime source of truth is `custom_components/eltako/manifest.json`.
 Home Assistant installs those requirements automatically when loading the
 integration. The repository's `requirements.txt` contains exactly the same
-runtime requirements, plus the development host and legacy discovery tools.
+runtime requirements, plus the development host.
 `tests/test_dependencies.py` checks that both lists stay in sync.
 
 ## Runtime requirements (manifest.json)
@@ -15,7 +15,7 @@ runtime requirements, plus the development host and legacy discovery tools.
 | esp2-gateway-adapter 0.2.21+bertel.1 | fork, commit `13358d198e069ea0fe21a2354442b475cdd79b22` | integration | ESP3 serial/TCP gateways presented as ESP2 |
 | pyserial 3.5 | exact | integration (`gateway.py`), eltako14bus, adapter | serial ports |
 | pyserial-asyncio-fast 0.16 | exact | eltako14bus (`serial_asyncio_fast`) | async serial I/O; replaces pyserial-asyncio |
-| aiocoap 0.4.17 | exact | eltako14bus (optional, imported lazily) | CoAP module of the library; kept pinned for the discovery tools |
+| aiocoap 0.4.17 | exact | eltako14bus (optional, imported lazily) | CoAP module of the library; kept pinned so its optional CoAP support stays on a tested version |
 | PyYAML 6.0.3 | exact | eltako14bus (`device.py`), tests | YAML; matches the HA 2026.10.2 core constraint |
 
 The three forks (all owned by bertel2020) are requested as immutable HTTPS
@@ -61,13 +61,8 @@ These are not part of the manifest and are never installed by Home Assistant.
 | Package | Pin | Purpose |
 | --- | --- | --- |
 | homeassistant 2026.10.2 | exact | development host matching the verified production release (Python 3.14) |
-| termcolor | unpinned, `requirements-tools.txt` | legacy `eltakodevice_discovery` tools only |
 | packaging | transitive via HA | `tests/test_dependencies.py`, `tests/test_metadata.py` |
 | pytest | not in `requirements.txt` | installed separately by the CI workflow; the suite also runs with `unittest` |
-
-The legacy discovery tools (`eltakodevice_discovery/`) additionally need
-`tkinter` (`dd_gui.py`), which is a system package and cannot be installed by
-pip. They are not used by the integration at runtime.
 
 ## Verified environment and tests
 

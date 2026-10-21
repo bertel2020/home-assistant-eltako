@@ -9,4 +9,3 @@ PyYAML==6.0.3
 
 # Development/test host matching the verified production HA release (Python 3.14).
 homeassistant==2026.10.2
-# Legacy discovery tools (eltakodevice_discovery): see requirements-tools.txt.
