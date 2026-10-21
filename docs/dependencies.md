@@ -94,7 +94,7 @@ checks byte-exact roundtrip. Run these tests separately: the legacy suite
 patches library functions globally during collection.
 
 Without the requirements installed the suite fails during collection (for
-example `ModuleNotFoundError: serial_asyncio`); the dependency tests skip their
+example `ModuleNotFoundError: serial_asyncio_fast`); the dependency tests skip their
 runtime checks if Home Assistant is missing.
 
 ## CI
