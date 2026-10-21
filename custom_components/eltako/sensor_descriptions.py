@@ -287,6 +287,22 @@ SENSOR_DESC_HUMIDITY = EltakoSensorEntityDescription(
     suggested_display_precision=0,
 )
 
+SENSOR_TYPE_ACCELERATION = "acceleration"
+
+def _acceleration_description(axis: str) -> "EltakoSensorEntityDescription":
+    return EltakoSensorEntityDescription(
+        key=f"{SENSOR_TYPE_ACCELERATION}_{axis}",
+        name=f"Acceleration {axis.upper()}",
+        native_unit_of_measurement="g",
+        icon="mdi:axis-arrow",
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+    )
+
+SENSOR_DESC_ACCELERATION_X = _acceleration_description("x")
+SENSOR_DESC_ACCELERATION_Y = _acceleration_description("y")
+SENSOR_DESC_ACCELERATION_Z = _acceleration_description("z")
+
 SENSOR_DESC_CO2 = EltakoSensorEntityDescription(
     key=SENSOR_TYPE_CO2,
     name="CO2",

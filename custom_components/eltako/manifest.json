@@ -10,13 +10,12 @@
   "issue_tracker": "https://github.com/bertel2020/home-assistant-eltako/issues",
   "loggers": ["eltako"],
   "requirements": [
-    "eltako14bus @ https://github.com/bertel2020/eltako14bus/archive/76d0dba36311bbd7c2e2813133eaf4ca341d7ca1.zip",
+    "eltako14bus @ https://github.com/bertel2020/eltako14bus/archive/f3c16278312ade28e5972bea5f5ff425469f9bbe.zip",
     "enocean @ https://github.com/bertel2020/enocean/archive/7956cce9365ae13dc057ba8bb09e2934fe5a1b2f.zip",
-    "StrEnum==0.4.15",
-    "esp2-gateway-adapter @ https://github.com/bertel2020/esp2_gateway_adapter/archive/7c8d6fccd2be057a1264b533a84ed140ff855569.zip",
+    "esp2-gateway-adapter @ https://github.com/bertel2020/esp2_gateway_adapter/archive/13358d198e069ea0fe21a2354442b475cdd79b22.zip",
     "aiocoap==0.4.17",
     "pyserial==3.5",
-    "pyserial-asyncio==0.6",
+    "pyserial-asyncio-fast==0.16",
     "PyYAML==6.0.3"
   ],
   "version": "1.8.0"

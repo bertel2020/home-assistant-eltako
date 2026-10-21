@@ -1,6 +1,7 @@
 # Changes and Feature List
 
 ## Unreleased
+* Add receive-only VLD (RORG D2) sensors for ESP3 gateways: D2-00-01 and D2-14-40/41 (temperature, humidity, illumination, acceleration, contact). The D2-14 profiles are not verified against hardware. Requires the new eltako14bus and esp2_gateway_adapter pins, which must be pushed before this installs.
 * Regenerate EEP parameter documentation from the pinned owned library; check documentation without modifying files and test real send-service telegrams.
 * Expose LAN host/port as attributes of the existing Serial Path sensor and add transport setup debug details; preserve entity IDs and values.
 * Validate saved climate/cover values, log invalid history and continue loading; preserve configured HVAC modes and intermediate cover positions (adapted from upstream 6bef4fc).

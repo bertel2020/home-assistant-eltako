@@ -43,7 +43,8 @@ CONF_EEP_SUPPORTED_BINARY_SENSOR = [F6_01_01.eep_string,
                                     A5_08_01.eep_string, 
                                     A5_30_01.eep_string,
                                     A5_13_01.eep_string,
-                                    A5_30_03.eep_string]
+                                    A5_30_03.eep_string,
+                                    D2_14_41.eep_string]
 CONF_EEP_SUPPORTED_SENSOR_ROCKER_SWITCH = [F6_02_01.eep_string, F6_02_02.eep_string]
 
 def _get_sender_schema(supported_sender_eep) -> vol.Schema:
@@ -197,6 +198,9 @@ class SensorSchema(EltakoPlatformSchema):
                           A5_12_02.eep_string, 
                           A5_12_03.eep_string, 
                           A5_13_01.eep_string,
+                          D2_00_01.eep_string,
+                          D2_14_40.eep_string,
+                          D2_14_41.eep_string,
                           F6_10_00.eep_string,  
                           ]
 
