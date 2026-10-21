@@ -28,7 +28,7 @@ The tool will then write all collected data into a file which you then need to e
 ## Tool Installation and Usage
 (Works on Linux as well as on Windows. Mac is not tested.)
 1. Python 3 is installed.
-2. Clone repo and change into it. `git clone https://github.com/grimmpp/home-assistant-eltako` and `cd home-assistant-eltako`
+2. Clone repo and change into it. `git clone https://github.com/bertel2020/home-assistant-eltako` and `cd home-assistant-eltako`
 3. Install virtual environment: `python.exe -m venv .venv`
 4. Install dependencies/libraries: `.\.venv\Scripts\pip.exe install -r .\requirements.txt -r .\requirements-tools.txt`
 5. Select python interpreter and virtualenv in VS Code: `CTRL + SHIFT + P`, type: `Python: Select Interpreter` and choose `Python 3.*` with path `.venv`.<br/>
